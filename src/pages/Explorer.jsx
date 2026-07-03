@@ -153,11 +153,12 @@ function flatten() {
 
 function highlightMatch(text, q) {
   if (!text || !q) return text;
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  const terms = q.split(/\s+/).filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (!terms.length) return text;
+  const parts = text.split(new RegExp(`(${terms.join("|")})`, "gi"));
   if (parts.length === 1) return text;
   return parts.map((part, i) =>
-    i % 2 === 1 ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark> : part
+    terms.some((t) => new RegExp(`^${t}$`, "i").test(part)) ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark> : part
   );
 }
 
@@ -183,13 +184,17 @@ export default function Explorer() {
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const [lens, setLens] = useState(initial.get("audience") || "both");
   const [selCompanies, setSelCompanies] = useState(() => initial.get("company") ? new Set([initial.get("company")]) : new Set());
-  const [selRoles, setSelRoles] = useState(new Set());
-  const [selProjects, setSelProjects] = useState(new Set());
+  // "role" is already taken by the delivery-role filter below — job-title role uses "jobRole" + "company" to build its key.
+  const [selRoles, setSelRoles] = useState(() => {
+    const jobRole = initial.get("jobRole"), company = initial.get("company");
+    return jobRole && company ? new Set([`${company} · ${jobRole}`]) : new Set();
+  });
+  const [selProjects, setSelProjects] = useState(() => initial.get("project") ? new Set([initial.get("project")]) : new Set());
   const toggleInSet = (setter) => (val) => setter((prev) => { const n = new Set(prev); n.has(val) ? n.delete(val) : n.add(val); return n; });
   const toggleCompany = toggleInSet(setSelCompanies);
   const toggleRole = toggleInSet(setSelRoles);
   const toggleProject = toggleInSet(setSelProjects);
-  const [funcRole, setFuncRole] = useState(initial.get("role") || "All");
+  const [selectedDeliveryRoles, setSelectedDeliveryRoles] = useState(initial.get("role") ? [initial.get("role")] : []);
   const [selectedCats, setSelectedCats] = useState(initial.get("cat") ? [initial.get("cat")] : []);
   const [selectedTypes, setSelectedTypes] = useState(initial.get("type") ? [initial.get("type")] : []);
   const [query, setQuery] = useState(initial.get("q") || "");
@@ -200,9 +205,9 @@ export default function Explorer() {
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [activePreset, setActivePreset] = useState(initial.get("preset") && TARGET_ROLES[initial.get("preset")] ? initial.get("preset") : null);
   const applyPreset = (name) => {
-    if (activePreset === name) { setActivePreset(null); setSelectedCats([]); setFuncRole("All"); setLens("both"); return; }
+    if (activePreset === name) { setActivePreset(null); setSelectedCats([]); setSelectedDeliveryRoles([]); setLens("both"); return; }
     const p = TARGET_ROLES[name];
-    setSelectedCats(p.categories); setFuncRole(p.deliveryRole); setLens(p.audience);
+    setSelectedCats(p.categories); setSelectedDeliveryRoles(p.deliveryRole === "All" ? [] : [p.deliveryRole]); setLens(p.audience);
     setSelCompanies(new Set()); setSelRoles(new Set()); setSelProjects(new Set()); setSelectedTypes([]);
     setActivePreset(name);
   };
@@ -211,6 +216,7 @@ export default function Explorer() {
   const toggle = (setter) => (val) => setter((s) => (s.includes(val) ? s.filter((x) => x !== val) : [...s, val]));
   const toggleCat = toggle(setSelectedCats);
   const toggleType = toggle(setSelectedTypes);
+  const toggleDeliveryRole = toggle(setSelectedDeliveryRoles);
 
   const rows = useMemo(() => flatten(), []);
 
@@ -220,18 +226,19 @@ export default function Explorer() {
       if (selCompanies.size && !selCompanies.has(r.employer)) return false;
       if (selRoles.size && !selRoles.has(`${r.employer} · ${r.jobTitle}`)) return false;
       if (selProjects.size && !(r.project && selProjects.has(r.project))) return false;
-      if (funcRole !== "All" && r.functionalRole !== funcRole) return false;
+      if (selectedDeliveryRoles.length && !selectedDeliveryRoles.includes(r.functionalRole)) return false;
       if (!r.placeholder && lens !== "both" && !(r.audience.includes(lens) || r.audience.includes("both"))) return false;
       if (selectedCats.length && !r.placeholder && !r.tags.some((t) => selectedCats.includes(t))) return false;
       if (selectedTypes.length && !r.placeholder && !selectedTypes.includes(r.type)) return false;
       if (minTier === "highlighted" && !r.highlighted) return false;
       if (query) {
-        const hay = (r.title || "") + (r.bullet || "") + (r.project || "") + (r.goal || "") + (r.detail || "") + (r.quote || "") + r.tags.join(" ");
-        if (!hay.toLowerCase().includes(query.toLowerCase())) return false;
+        const hay = ((r.title || "") + (r.bullet || "") + (r.project || "") + (r.goal || "") + (r.detail || "") + (r.quote || "") + r.tags.join(" ")).toLowerCase();
+        const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+        if (!terms.every((t) => hay.includes(t))) return false;
       }
       return true;
     }).sort((a, b) => (b.year || 0) - (a.year || 0));
-  }, [rows, selCompanies, selRoles, selProjects, funcRole, lens, selectedCats, selectedTypes, query, showPlaceholders, minTier]);
+  }, [rows, selCompanies, selRoles, selProjects, selectedDeliveryRoles, lens, selectedCats, selectedTypes, query, showPlaceholders, minTier]);
 
   const goalByKey = useMemo(() => {
     const m = new Map();
@@ -243,43 +250,6 @@ export default function Explorer() {
     ROLES.forEach((r) => m.set(`${r.company} · ${r.title}`, r.description));
     return m;
   }, []);
-  const treeData = useMemo(() => COMPANIES.map((c) => ({
-    ...c,
-    roles: ROLES.filter((r) => r.company === c.name).map((r) => ({
-      ...r,
-      key: `${r.company} · ${r.title}`,
-      projects: PROJECTS.filter((p) => p.employer === c.name),
-    })),
-  })), []);
-  const TREE_X = { company: 12, role: 260, project: 508 };
-  const TREE_W = { company: 176, role: 176, project: 232 };
-  const TREE_ROW_H = 46, TREE_PAD = 24;
-  const TREE_LAYOUT = useMemo(() => {
-    let leafIndex = 0;
-    const companyY = {}, roleY = {}, projectY = {};
-    treeData.forEach((c) => {
-      const roleYs = [];
-      c.roles.forEach((r) => {
-        if (r.projects.length) {
-          const projYs = [];
-          r.projects.forEach((p) => {
-            const y = TREE_PAD + leafIndex * TREE_ROW_H + TREE_ROW_H / 2;
-            projectY[`${r.key}__${p.name}`] = y;
-            projYs.push(y);
-            leafIndex++;
-          });
-          roleY[r.key] = projYs.reduce((a, b) => a + b, 0) / projYs.length;
-        } else {
-          const y = TREE_PAD + leafIndex * TREE_ROW_H + TREE_ROW_H / 2;
-          roleY[r.key] = y;
-          leafIndex++;
-        }
-        roleYs.push(roleY[r.key]);
-      });
-      companyY[c.name] = roleYs.reduce((a, b) => a + b, 0) / roleYs.length;
-    });
-    return { companyY, roleY, projectY, height: TREE_PAD * 2 + leafIndex * TREE_ROW_H };
-  }, [treeData]);
   const groups = useMemo(() => {
     if (groupBy === "none") return [{ key: null, items: filtered }];
     if (groupBy === "expertise") {
@@ -304,7 +274,7 @@ export default function Explorer() {
     selCompanies.forEach((c) => f.push({ label: `Company: ${c}`, clear: () => toggleCompany(c), color: accent }));
     selRoles.forEach((r) => f.push({ label: `Role: ${r.split(" · ")[1]}`, clear: () => toggleRole(r), color: accent }));
     selProjects.forEach((p) => f.push({ label: `Project: ${p}`, clear: () => toggleProject(p), color: accent }));
-    if (funcRole !== "All") f.push({ label: `Delivery: ${funcRole}`, clear: () => setFuncRole("All"), color: accent });
+    selectedDeliveryRoles.forEach((r) => f.push({ label: `Delivery: ${r}`, clear: () => toggleDeliveryRole(r), color: accent }));
     selectedCats.forEach((c) => f.push({ label: `Expertise: ${c}`, clear: () => toggleCat(c), color: accent }));
     selectedTypes.forEach((t) => f.push({ label: `Type: ${t}`, clear: () => toggleType(t), color: TYPE_COLORS[t] }));
     if (lens !== "both") f.push({ label: `Audience: ${lens}`, clear: () => setLens("both"), color: accent });
@@ -312,9 +282,9 @@ export default function Explorer() {
     if (activePreset) f.push({ label: `Preset: ${activePreset}`, clear: () => applyPreset(activePreset), color: accent });
     if (query) f.push({ label: `Search: "${query}"`, clear: () => setQuery(""), color: accent });
     return f;
-  }, [selCompanies, selRoles, selProjects, funcRole, selectedCats, selectedTypes, lens, minTier, activePreset, query, accent]);
+  }, [selCompanies, selRoles, selProjects, selectedDeliveryRoles, selectedCats, selectedTypes, lens, minTier, activePreset, query, accent]);
   const clearAllFilters = () => {
-    setSelCompanies(new Set()); setSelRoles(new Set()); setSelProjects(new Set()); setFuncRole("All");
+    setSelCompanies(new Set()); setSelRoles(new Set()); setSelProjects(new Set()); setSelectedDeliveryRoles([]);
     setSelectedCats([]); setSelectedTypes([]); setLens("both"); setMinTier("all"); setActivePreset(null); setQuery("");
   };
 
@@ -372,68 +342,62 @@ export default function Explorer() {
 
           {filtersOpen && (
           <>
-          <div className="font-mono text-[10px] text-black/40 uppercase mb-2">Company → Role → Project <span className="normal-case text-black/30">(click any node — multiple allowed)</span></div>
-          <div className="overflow-x-auto -mx-1 px-1">
-            <div className="relative" style={{ width: TREE_X.project + TREE_W.project + 16, height: TREE_LAYOUT.height, minWidth: TREE_X.project + TREE_W.project + 16 }}>
-              <svg className="absolute inset-0 pointer-events-none" width={TREE_X.project + TREE_W.project + 16} height={TREE_LAYOUT.height}>
-                {treeData.flatMap((c) => c.roles.map((r) => (
-                  <line key={`cr-${r.key}`} x1={TREE_X.company + TREE_W.company} y1={TREE_LAYOUT.companyY[c.name]} x2={TREE_X.role} y2={TREE_LAYOUT.roleY[r.key]} stroke={selCompanies.has(c.name) || selRoles.has(r.key) ? ACCENTS[c.name] : "#00000020"} strokeWidth={1.5} />
-                )))}
-                {treeData.flatMap((c) => c.roles.flatMap((r) => r.projects.map((p) => (
-                  <line key={`rp-${r.key}-${p.name}`} x1={TREE_X.role + TREE_W.role} y1={TREE_LAYOUT.roleY[r.key]} x2={TREE_X.project} y2={TREE_LAYOUT.projectY[`${r.key}__${p.name}`]} stroke={selRoles.has(r.key) || selProjects.has(p.name) ? ACCENTS[c.name] : "#00000020"} strokeWidth={1.5} />
-                ))))}
-              </svg>
-
-              {treeData.map((c) => {
-                const on = selCompanies.has(c.name);
-                const y = TREE_LAYOUT.companyY[c.name];
-                return (
-                  <button key={c.name} onClick={() => toggleCompany(c.name)} title={c.blurb}
-                    className="absolute rounded-lg border px-3 py-1.5 text-left transition-colors shadow-sm"
-                    style={{ left: TREE_X.company, top: y - 20, width: TREE_W.company, height: 40, background: on ? ACCENTS[c.name] : "#fff", borderColor: on ? ACCENTS[c.name] : "rgba(0,0,0,0.15)" }}>
-                    <div className={`font-display font-semibold text-xs truncate ${on ? "text-white" : "text-ink"}`}>{c.name}</div>
-                    <div className={`font-mono text-[9px] truncate ${on ? "text-white/80" : "text-black/40"}`}>{c.years}</div>
-                  </button>
-                );
-              })}
-
-              {treeData.flatMap((c) => c.roles.map((r) => {
-                const on = selRoles.has(r.key);
-                const y = TREE_LAYOUT.roleY[r.key];
-                return (
-                  <button key={r.key} onClick={() => toggleRole(r.key)} title={r.description}
-                    className="absolute rounded-lg border px-3 py-1.5 text-left transition-colors shadow-sm"
-                    style={{ left: TREE_X.role, top: y - 20, width: TREE_W.role, height: 40, background: on ? ACCENTS[c.name] : "#fff", borderColor: on ? ACCENTS[c.name] : "rgba(0,0,0,0.15)" }}>
-                    <div className={`text-xs font-medium truncate ${on ? "text-white" : ""}`} style={!on ? { color: ACCENTS[c.name] } : {}}>{r.title}</div>
-                    <div className={`font-mono text-[9px] truncate ${on ? "text-white/80" : "text-black/30"}`}>{r.projects.length ? `${r.projects.length} projects` : "general evidence"}</div>
-                  </button>
-                );
-              }))}
-
-              {treeData.flatMap((c) => c.roles.flatMap((r) => r.projects.map((p) => {
-                const on = selProjects.has(p.name);
-                const y = TREE_LAYOUT.projectY[`${r.key}__${p.name}`];
-                const clientTag = p.company !== c.name ? ` (${p.company.split(" ")[0]})` : "";
-                return (
-                  <button key={p.name} onClick={() => toggleProject(p.name)} title={p.goal}
-                    className="absolute rounded-md border px-2.5 flex items-center transition-colors shadow-sm"
-                    style={{ left: TREE_X.project, top: y - 17, width: TREE_W.project, height: 34, background: on ? ACCENTS[c.name] : "#fff", borderColor: on ? ACCENTS[c.name] : "rgba(0,0,0,0.15)" }}>
-                    <span className={`text-[10px] font-mono truncate ${on ? "text-white" : "text-black/70"}`}>{p.name}{clientTag}</span>
-                  </button>
-                );
-              })))}
-            </div>
-          </div>
-
-          <div className="border-t border-black/10 mt-4 pt-4 space-y-4">
+          <div className="space-y-4">
             <div>
+              <span className="font-mono text-[10px] text-black/40 uppercase block mb-2">Company — employer</span>
+              <div className="flex gap-2 flex-wrap">
+                {COMPANIES.map((c) => {
+                  const on = selCompanies.has(c.name);
+                  return (
+                    <button key={c.name} onClick={() => toggleCompany(c.name)} title={c.blurb}
+                      className={`px-3 py-1.5 rounded-md text-xs font-mono border ${on ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+                      style={on ? { background: ACCENTS[c.name] } : {}}>{c.name}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <span className="font-mono text-[10px] text-black/40 uppercase block mb-2">Role — job title held at that company</span>
+              <div className="flex gap-2 flex-wrap">
+                {ROLES.map((r) => {
+                  const key = `${r.company} · ${r.title}`;
+                  const on = selRoles.has(key);
+                  return (
+                    <button key={key} onClick={() => toggleRole(key)} title={r.description}
+                      className={`px-3 py-1.5 rounded-md text-xs font-mono border ${on ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+                      style={on ? { background: ACCENTS[r.company] } : {}}>{r.title}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <span className="font-mono text-[10px] text-black/40 uppercase block mb-2">Project — specific piece of delivery work</span>
+              <div className="flex gap-2 flex-wrap">
+                {PROJECTS.map((p) => {
+                  const on = selProjects.has(p.name);
+                  const clientTag = p.company !== p.employer ? ` (${p.company.split(" ")[0]})` : "";
+                  return (
+                    <button key={p.name} onClick={() => toggleProject(p.name)} title={p.goal}
+                      className={`px-3 py-1.5 rounded-md text-xs font-mono border ${on ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+                      style={on ? { background: ACCENTS[p.employer] } : {}}>{p.name}{clientTag}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border-t border-black/10 pt-4">
               <span className="font-mono text-[10px] text-black/40 uppercase block mb-2">Delivery role — what hat, on that project (distinct from job title)</span>
               <div className="flex gap-2 flex-wrap">
-                {FUNC_ROLES.map((r) => (
-                  <button key={r} onClick={() => setFuncRole(funcRole === r ? "All" : r)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-mono border ${funcRole === r ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
-                    style={funcRole === r ? { background: accent } : {}}>{r}</button>
-                ))}
+                {FUNC_ROLES.map((r) => {
+                  const on = selectedDeliveryRoles.includes(r);
+                  return (
+                    <button key={r} onClick={() => toggleDeliveryRole(r)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-mono border ${on ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+                      style={on ? { background: accent } : {}}>{r}</button>
+                  );
+                })}
               </div>
             </div>
 

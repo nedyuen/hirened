@@ -87,6 +87,20 @@ const TIMELINE = [
   { org: "JP Morgan", role: "Transformation Vice President", years: "2021–Present", d: "Securities Ops Transformation → Markets Ops Platform Transformation → Markets Regulatory Control Transformation." },
 ];
 
+// Compact Company → Role diagram for the Career Journey section — two levels only, not exploded to projects (that's the Explorer's job).
+const COMPANIES_ROLES = [
+  { company: "UBS", roles: [
+    { title: "Operations Analyst", years: "2012–2016" },
+    { title: "Sales Associate", years: "2016–2017" },
+  ]},
+  { company: "Accenture", roles: [
+    { title: "Consulting Manager", years: "2017–2021" },
+  ]},
+  { company: "JP Morgan", roles: [
+    { title: "Transformation Vice President", years: "2021–Present" },
+  ]},
+];
+
 const EDUCATION = [
   { i: "MBA, Strategic Leadership & Management", s: "University of Exeter — via JP Morgan Senior Leader Apprenticeship (in progress)" },
   { i: "BSc, Economics & Management", s: "University of Bristol" },
@@ -302,6 +316,32 @@ export default function Profile() {
       {/* CAREER JOURNEY */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="05 — Track record" title="Career journey" icon="chart" />
+
+        <div className="mb-8">
+          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Company → Role <span className="normal-case text-black/30">(click to explore evidence)</span></div>
+          <div className="space-y-2">
+            {COMPANIES_ROLES.map((c) => (
+              <div key={c.company} className="flex flex-col sm:flex-row sm:items-stretch gap-2">
+                <a href={explorerLink({ company: c.company })}
+                  className="sm:w-44 shrink-0 rounded-lg border p-3 flex items-center transition-colors hover:shadow-sm"
+                  style={{ borderColor: `${ACCENTS[c.company]}40`, background: `${ACCENTS[c.company]}0d` }}>
+                  <span className="font-display font-semibold text-sm" style={{ color: ACCENTS[c.company] }}>{c.company}</span>
+                </a>
+                <div className="flex-1 flex flex-wrap gap-2 relative">
+                  <div className="hidden sm:block absolute -left-2 top-1/2 -translate-y-1/2 w-2 h-px" style={{ background: `${ACCENTS[c.company]}40` }} />
+                  {c.roles.map((r) => (
+                    <a key={r.title} href={explorerLink({ company: c.company, jobRole: r.title })}
+                      className="rounded-lg border border-black/10 bg-white px-3 py-2 hover:border-black/25 transition-colors">
+                      <div className="text-xs font-medium">{r.title}</div>
+                      <div className="font-mono text-[10px] text-black/40">{r.years}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div>
           {[...TIMELINE].reverse().map((t, i) => (
             <div key={i} className="flex gap-6 py-5 border-b border-black/10 last:border-0">

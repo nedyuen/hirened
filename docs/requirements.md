@@ -99,7 +99,7 @@ RLS: every table scoped by `owner_id = auth.uid()` for writes, public read — t
 
 ### Layout
 - **Company → Role → Project tree** at top: compact indented/collapsible tree (not a node-link diagram with drawn connector lines — too fragile on resize/mobile). Click any node at any level to cascade-filter (click Company → filters to employer; click Role → filters to company+stint, shows role description inline; click Project chip → filters to that exact project, auto-sets parents too). "Reset selection" appears whenever a tree filter is active.
-- **Search bar** — full text, matches title + project goal + full detail write-up + quotes + tags. Not just the bullet headline.
+- **Search bar** — full text, matches title + project goal + full detail write-up + quotes + tags. Not just the bullet headline. Matching is **AND-of-words**, not phrase/substring: each space-separated word must appear somewhere on the card, independently — "Python data" matches a card that mentions Python in one sentence and data elsewhere, not just cards where those words appear adjacent and in that order.
 - **Primary filters, always visible:** Company (via tree), Search.
 - **Secondary filters, collapsed behind "More filters ▾" with an active-count badge:** Type (achievement/award/review, with icons), Expertise (the 8-category multi-select, click-to-toggle), Delivery role (project-level hat — labeled distinctly from job-title Role to avoid confusion).
 - **Group-by control:** Company / Role / Delivery role / Project / Type / Expertise-tag / Flat. Each labeled plainly (what it groups by, in plain language, not just a keyword).
@@ -114,6 +114,7 @@ RLS: every table scoped by `owner_id = auth.uid()` for writes, public read — t
 - Grouping by tag showing full duplicate cards in every matching group → replaced with home-group-plus-stub pattern.
 - Achievement requiring a mandatory parent Responsibility → rejected, kept as optional many-to-many link (see §2).
 - Merging Company(employer) and Company(client) into one filter dimension → caused real filter bugs, now explicitly separate.
+- Free-text OR search (comma-separated terms or similar "match any word" syntax) → considered and deferred. The Company/Role/Project/Delivery role/Expertise/Type chip filters already serve "match any of these values" for anything structured; OR-style free text would just duplicate that. Search stays AND-of-words.
 
 ---
 
