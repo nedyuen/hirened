@@ -78,6 +78,51 @@ const FUNCTIONAL = [
   { cat: "Management", icon: "people", items: ["Team Ownership", "People Management", "Coaching & Mentoring", "Skills Training"] },
 ];
 
+// Hand-maintained, same pattern as Explorer.jsx's TARGET_ROLES — Ned edits this directly to control which
+// proof example surfaces per category. type: 'achievement' pulls a specific bullet (sharp, metric-driven);
+// type: 'project' pulls the project's goal instead (general, when a granular metric isn't the point).
+// `ref` must match an evidence `title` or project `name` exactly as it appears in Explorer.jsx.
+const CAREER_HIGHLIGHTS = {
+  Strategy: [{ type: "project", ref: "Prime Transformation" }],
+  Operations: [{ type: "achievement", ref: "Trade reporting control framework" }],
+  Product: [{ type: "achievement", ref: "One-stop-shop trade processing platform" }],
+  Data: [{ type: "achievement", ref: "Digital & Platform Services Excellence Award" }],
+  Programming: [{ type: "achievement", ref: "Automated Bloomberg data feeds" }],
+  Change: [{ type: "achievement", ref: "Scrum, DevOps & ML analytics adoption" }],
+  Finance: [{ type: "achievement", ref: "Reactivated $1M in dormant client revenue" }],
+  Management: [{ type: "achievement", ref: "MBA sponsorship, Senior Leader Apprenticeship" }],
+};
+
+// Local copy of only the 8 refs above (bullet/goal text), word-for-word identical to Explorer.jsx's
+// PROJECTS/ROLE_EVIDENCE — same minimal-local-copy pattern as COMPANIES_ROLES, not the full dataset.
+// If Explorer's wording changes, update the source there first, then copy it here.
+const HIGHLIGHT_TEXT = {
+  "Prime Transformation": "Driving the business transformation agenda for the Prime business.",
+  "Trade reporting control framework": "Designed and implemented a front-to-back reconciliation and control framework for trade reporting.",
+  "One-stop-shop trade processing platform": "Delivered a one-stop-shop trade processing platform, displacing 37 legacy systems across desks.",
+  "Digital & Platform Services Excellence Award": "Partnered with the ML team to deploy models supporting automated trade resolution, earning JPM's quarterly Digital & Platform Services Excellence Award.",
+  "Automated Bloomberg data feeds": "Automated vendor data feeds, removing a $50k/yr subscription cost.",
+  "Scrum, DevOps & ML analytics adoption": "Championed agile and ML-assisted QA tooling adoption, lifting pass rates by 35%.",
+  "Reactivated $1M in dormant client revenue": "Reactivated $1M in dormant client revenue by rebuilding relationships with high-value hedge fund clients.",
+  "MBA sponsorship, Senior Leader Apprenticeship": "Selected for full MBA sponsorship on JPM's Senior Leader Apprenticeship program.",
+};
+
+// Hand-picked reviews to surface on the homepage. Reference existing review evidence by title/source —
+// do not write new quote text here. Edit which reviews appear by changing this list, not by adding new content.
+const TESTIMONIALS = [
+  { title: "Client feedback", source: "VP, Morgan Stanley Operations" },
+  { title: "Manager feedback", source: "Managing Director, JPM Markets Operations" },
+];
+
+// Local copy of only the quote text for the testimonials above, word-for-word identical to Explorer.jsx's
+// PROJECTS/ROLE_EVIDENCE review items — same minimal-local-copy pattern as HIGHLIGHT_TEXT, not the full dataset.
+// Both source reviews are currently sample: true in Explorer — placeholder content like ~13 other evidence
+// items already are, not a blocker to showing this section; swap for real reviews during the content pass.
+const TESTIMONIAL_TEXT = {
+  "Client feedback": "The control framework Ned designed is still how we catch breaks before they become reportable issues.",
+  "Manager feedback": "Ned brings structure to the messiest problems on the desk — he's the person I want in the room when we don't yet know the answer.",
+};
+
 const TECHNICAL = ["Python", "SQL", "JavaScript", "HTML", "Excel / VBA", "Alteryx", "Power Automate", "Power Apps", "Tableau", "Claude Code", "Google AI Studio", "NLTK", "Scikit-Learn", "API Integration", "IBM Cloud", "Figma", "JIRA"];
 
 const TIMELINE = [
@@ -131,6 +176,7 @@ const ICONS = {
   path: "M4 20c4-8 8 8 12 0M4 4c4 8 8-8 12 0",
   cap: "M12 3L2 8l10 5 10-5-10-5zM6 10.5V17s2.5 3 6 3 6-3 6-3v-6.5",
   medal: "M12 8a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM8.5 13 7 21l5-2.5L17 21l-1.5-8",
+  quote: "M7 8h3v4H7c0 2.2-1 3.5-2 4M15 8h3v4h-3c0 2.2-1 3.5-2 4",
 };
 function Icon({ name, size = 18, color = INK, strokeWidth = 1.6 }) {
   return (
@@ -233,7 +279,8 @@ export default function Profile() {
           <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">Roles I'm looking for</div>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <span key={r} className="font-mono text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: ACCENT, color: ACCENT }}>{r}</span>
+              <a key={r} href={explorerLink({ preset: r })} className="font-mono text-xs px-3 py-1.5 rounded-full border hover:text-white transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
+                onMouseEnter={(e) => e.currentTarget.style.background = ACCENT} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{r}</a>
             ))}
           </div>
         </div>
@@ -290,17 +337,33 @@ export default function Profile() {
           On paper, a Transformation Lead. In practice, working at the intersection of Strategy, Operations, Product, Data, Programming, Change, Finance and Management.
         </p>
         <div className="grid md:grid-cols-2 gap-4 mb-8">
-          {FUNCTIONAL.map((f) => (
-            <a key={f.cat} href={explorerLink({ cat: f.cat })} className="bg-white rounded-lg border border-black/10 p-3.5 flex gap-3 hover:border-black/25 transition-colors">
-              <div className="w-9 h-9 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
-                <Icon name={f.icon} size={16} color={ACCENT} />
-              </div>
-              <div>
-                <div className="font-display font-semibold text-sm mb-1">{f.cat}</div>
-                <div className="text-xs text-black/60 leading-relaxed">{f.items.join(" · ")}</div>
-              </div>
-            </a>
-          ))}
+          {FUNCTIONAL.map((f) => {
+            const highlights = CAREER_HIGHLIGHTS[f.cat] || [];
+            return (
+              <a key={f.cat} href={explorerLink({ cat: f.cat })} className="bg-white rounded-lg border border-black/10 p-3.5 flex flex-col hover:border-black/25 transition-colors">
+                <div className="flex gap-3">
+                  <div className="w-9 h-9 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
+                    <Icon name={f.icon} size={16} color={ACCENT} />
+                  </div>
+                  <div>
+                    <div className="font-display font-semibold text-sm mb-1">{f.cat}</div>
+                    <div className="text-xs text-black/60 leading-relaxed">{f.items.join(" · ")}</div>
+                  </div>
+                </div>
+                {highlights.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-black/10">
+                    {highlights.map((h, i) => (
+                      <p key={i} className="text-[11px] text-black/50 leading-relaxed line-clamp-2">
+                        <span className="font-mono text-[9px] uppercase tracking-wide text-black/35 mr-1">Example —</span>
+                        {HIGHLIGHT_TEXT[h.ref]}
+                      </p>
+                    ))}
+                    <div className="text-[10px] font-mono mt-1.5" style={{ color: ACCENT }}>See all {f.cat} achievements →</div>
+                  </div>
+                )}
+              </a>
+            );
+          })}
         </div>
 
         <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Technical toolkit</div>
@@ -322,7 +385,7 @@ export default function Profile() {
           <div className="space-y-2">
             {COMPANIES_ROLES.map((c) => (
               <div key={c.company} className="flex flex-col sm:flex-row sm:items-stretch gap-2">
-                <a href={explorerLink({ company: c.company })}
+                <a href={explorerLink({ company: c.company, groupBy: "company" })}
                   className="sm:w-44 shrink-0 rounded-lg border p-3 flex items-center transition-colors hover:shadow-sm"
                   style={{ borderColor: `${ACCENTS[c.company]}40`, background: `${ACCENTS[c.company]}0d` }}>
                   <span className="font-display font-semibold text-sm" style={{ color: ACCENTS[c.company] }}>{c.company}</span>
@@ -330,7 +393,7 @@ export default function Profile() {
                 <div className="flex-1 flex flex-wrap gap-2 relative">
                   <div className="hidden sm:block absolute -left-2 top-1/2 -translate-y-1/2 w-2 h-px" style={{ background: `${ACCENTS[c.company]}40` }} />
                   {c.roles.map((r) => (
-                    <a key={r.title} href={explorerLink({ company: c.company, jobRole: r.title })}
+                    <a key={r.title} href={explorerLink({ company: c.company, jobRole: r.title, groupBy: "role" })}
                       className="rounded-lg border border-black/10 bg-white px-3 py-2 hover:border-black/25 transition-colors">
                       <div className="text-xs font-medium">{r.title}</div>
                       <div className="font-mono text-[10px] text-black/40">{r.years}</div>
@@ -389,6 +452,19 @@ export default function Profile() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+        <SectionHeader eyebrow="07 — In their words" title="What others say" icon="quote" />
+        <div className="grid md:grid-cols-2 gap-4">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.title} className="bg-white rounded-lg border border-black/10 border-l-4 p-4" style={{ borderLeftColor: ACCENT }}>
+              <p className="text-sm text-black/70 italic leading-relaxed">"{TESTIMONIAL_TEXT[t.title]}"</p>
+              <div className="font-mono text-[11px] text-black/40 mt-3">— {t.source}</div>
+            </div>
+          ))}
         </div>
       </section>
 

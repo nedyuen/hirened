@@ -182,7 +182,11 @@ function KpiBadge({ level }) {
 
 export default function Explorer() {
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const [lens, setLens] = useState(initial.get("audience") || "both");
+  // A "?preset=" link (e.g. from Profile's Roles-I'm-looking-for chips) should apply that preset's actual
+  // filters on load, not just show its label — otherwise landing via that link filters nothing.
+  const initialPresetName = initial.get("preset") && TARGET_ROLES[initial.get("preset")] ? initial.get("preset") : null;
+  const initialPreset = initialPresetName ? TARGET_ROLES[initialPresetName] : null;
+  const [lens, setLens] = useState(initial.get("audience") || (initialPreset ? initialPreset.audience : "both"));
   const [selCompanies, setSelCompanies] = useState(() => initial.get("company") ? new Set([initial.get("company")]) : new Set());
   // "role" is already taken by the delivery-role filter below — job-title role uses "jobRole" + "company" to build its key.
   const [selRoles, setSelRoles] = useState(() => {
@@ -194,16 +198,21 @@ export default function Explorer() {
   const toggleCompany = toggleInSet(setSelCompanies);
   const toggleRole = toggleInSet(setSelRoles);
   const toggleProject = toggleInSet(setSelProjects);
-  const [selectedDeliveryRoles, setSelectedDeliveryRoles] = useState(initial.get("role") ? [initial.get("role")] : []);
-  const [selectedCats, setSelectedCats] = useState(initial.get("cat") ? [initial.get("cat")] : []);
+  const [selectedDeliveryRoles, setSelectedDeliveryRoles] = useState(() => {
+    if (initial.get("role")) return [initial.get("role")];
+    if (initialPreset && initialPreset.deliveryRole !== "All") return [initialPreset.deliveryRole];
+    return [];
+  });
+  const [selectedCats, setSelectedCats] = useState(initial.get("cat") ? [initial.get("cat")] : (initialPreset ? initialPreset.categories : []));
   const [selectedTypes, setSelectedTypes] = useState(initial.get("type") ? [initial.get("type")] : []);
   const [query, setQuery] = useState(initial.get("q") || "");
-  const [groupBy, setGroupBy] = useState("company");
+  const [groupBy, setGroupBy] = useState(initial.get("groupBy") || "company");
   const [expanded, setExpanded] = useState(null);
   const [showPlaceholders, setShowPlaceholders] = useState(true);
   const [minTier, setMinTier] = useState(initial.get("tier") || "all"); // 'all' | 'notable' | 'signature'
-  const [filtersOpen, setFiltersOpen] = useState(true);
-  const [activePreset, setActivePreset] = useState(initial.get("preset") && TARGET_ROLES[initial.get("preset")] ? initial.get("preset") : null);
+  const hasIncomingFilters = ["type", "cat", "role", "tier", "preset", "company", "audience", "q", "groupBy"].some((p) => initial.get(p));
+  const [filtersOpen, setFiltersOpen] = useState(!hasIncomingFilters);
+  const [activePreset, setActivePreset] = useState(initialPresetName);
   const applyPreset = (name) => {
     if (activePreset === name) { setActivePreset(null); setSelectedCats([]); setSelectedDeliveryRoles([]); setLens("both"); return; }
     const p = TARGET_ROLES[name];
