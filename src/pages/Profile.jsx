@@ -33,22 +33,22 @@ const ROLES = [
 ];
 
 const PERSONALITY = [
-  "Genuinely himself — acts and speaks his mind without hiding emotions or managing perception",
-  "Kind-hearted, non-confrontational, always willing to help — generally likeable",
-  "Perfectionist with an eye for craft — treats assignments as pieces of work worth getting right, not just tasks",
-  "Triggered by inefficiency and randomness — feels obliged to do something about it",
-  "Inquisitive and competitive — obsessive about learning and broadening his skill set",
-  "Over-thinker and over-preparer — tracks and reflects on everything, highly self-aware",
-  "Motivated by winning people over and earning recognition through visible, high-quality output",
+  { t: "Genuinely himself — acts and speaks his mind without hiding emotions or managing perception", icon: "spark" },
+  { t: "Kind-hearted, non-confrontational, always willing to help — generally likeable", icon: "people" },
+  { t: "Perfectionist with an eye for craft — treats assignments as pieces of work worth getting right, not just tasks", icon: "target" },
+  { t: "Triggered by inefficiency and randomness — feels obliged to do something about it", icon: "gear" },
+  { t: "Inquisitive and competitive — obsessive about learning and broadening his skill set", icon: "compass" },
+  { t: "Over-thinker and over-preparer — tracks and reflects on everything, highly self-aware", icon: "chart" },
+  { t: "Motivated by winning people over and earning recognition through visible, high-quality output", icon: "medal" },
 ];
 
 const WORK_PREFS = [
-  "Provide inputs that contribute directly towards the end outcome or product",
-  "Infuse his own creative ideas into the design of a process or system, ideally from scratch",
-  "Work on a variety of initiatives that require bringing together skills from across disciplines",
-  "Be kept busy and in on-fire mode — fast-approaching deadlines excite rather than stress him",
-  "Fully own a deliverable, be the central decision maker, and do things his own way",
-  "Gain deep knowledge on a topic and act as the subject matter expert",
+  { t: "Provide inputs that contribute directly towards the end outcome or product", icon: "cube" },
+  { t: "Infuse his own creative ideas into the design of a process or system, ideally from scratch", icon: "path" },
+  { t: "Work on a variety of initiatives that require bringing together skills from across disciplines", icon: "code" },
+  { t: "Be kept busy and in on-fire mode — fast-approaching deadlines excite rather than stress him", icon: "refresh" },
+  { t: "Fully own a deliverable, be the central decision maker, and do things his own way", icon: "coin" },
+  { t: "Gain deep knowledge on a topic and act as the subject matter expert", icon: "cap" },
 ];
 
 const FUNCTIONAL = [
@@ -89,10 +89,10 @@ const TESTIMONIALS = [
 const TECHNICAL = ["Python", "SQL", "JavaScript", "HTML", "Excel / VBA", "Alteryx", "Power Automate", "Power Apps", "Tableau", "Claude Code", "Google AI Studio", "NLTK", "Scikit-Learn", "API Integration", "IBM Cloud", "Figma", "JIRA"];
 
 const EDUCATION = [
-  { i: "MBA, Strategic Leadership & Management", s: "University of Exeter — via JP Morgan Senior Leader Apprenticeship (in progress)" },
-  { i: "BSc, Economics & Management", s: "University of Bristol" },
-  { i: "Oxford Fintech Programme", s: "Saïd Business School, Oxford University" },
-  { i: "Leading with Advanced Analytics & AI", s: "Kellogg School of Management, Northwestern" },
+  { i: "MBA, Strategic Leadership & Management", s: "University of Exeter — via JP Morgan Senior Leader Apprenticeship (in progress)", icon: "people" },
+  { i: "BSc, Economics & Management", s: "University of Bristol", icon: "chart" },
+  { i: "Oxford Fintech Programme", s: "Saïd Business School, Oxford University", icon: "coin" },
+  { i: "Leading with Advanced Analytics & AI", s: "Kellogg School of Management, Northwestern", icon: "code" },
 ];
 
 const QUALIFICATIONS = [
@@ -246,7 +246,7 @@ export default function Profile() {
       <header className="max-w-6xl mx-auto px-6 pt-14 pb-10">
         <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>Professional Summary</div>
         <h1 className="font-display text-4xl md:text-5xl font-semibold leading-[1.05] tracking-tight max-w-2xl">
-          Senior Strategy &amp; Transformation Lead, 13 years inside Capital Markets.
+          Senior Strategy and Transformation Lead — driving operational efficiency through AI, Product &amp; Program Delivery.
         </h1>
         <div className="mt-6 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
           <Headshot size={160} />
@@ -257,10 +257,10 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="mt-8 grid sm:grid-cols-2 gap-4">
+        <div className="mt-8 grid sm:grid-cols-3 gap-4">
           {Object.entries(CONTEXT).map(([k, vals]) => (
             <div key={k}>
-              <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-1.5">{k}</div>
+              <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">{k}</div>
               <div className="flex flex-wrap gap-1.5">
                 {vals.map((v) => <span key={v} className="text-[11px] font-mono bg-black/5 px-2 py-1 rounded">{v}</span>)}
               </div>
@@ -268,7 +268,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 bg-white rounded-lg border border-black/10 p-4">
           <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">Roles I'm looking for</div>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
@@ -282,7 +282,7 @@ export default function Profile() {
 
       {/* REASONS TO HIRE */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Why Hire Me" title="Why should you hire me?" icon="target" />
+        <SectionHeader eyebrow="01 — Why Hire Me" title="Why should you hire me?" icon="target" />
         <div className="grid md:grid-cols-2 gap-x-10 gap-y-6">
           {REASONS.map((r) => (
             <div key={r.t} className="flex gap-3">
@@ -300,7 +300,7 @@ export default function Profile() {
 
       {/* ABOUT ME */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Personality & Motivators" title="What am I like to work with?" icon="spark" />
+        <SectionHeader eyebrow="02 — Personality & Motivators" title="What am I like to work with?" icon="spark" />
         <div className="flex gap-2 mb-6">
           <button onClick={() => setAboutTab("personality")}
             className={`px-4 py-2 rounded-md text-sm font-mono border ${aboutTab === "personality" ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
@@ -310,20 +310,26 @@ export default function Profile() {
             style={aboutTab === "workstyle" ? { background: ACCENT } : {}}>Work Style</button>
         </div>
         {aboutTab === "personality" ? (
-          <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2">
+          <ul className="grid md:grid-cols-2 gap-x-8 gap-y-3">
             {PERSONALITY.map((p) => (
-              <li key={p} className="text-sm text-black/70 leading-relaxed flex gap-2">
-                <span style={{ color: ACCENT }} className="shrink-0">—</span>{p}
+              <li key={p.t} className="flex gap-3">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
+                  <Icon name={p.icon} size={14} color={ACCENT} />
+                </div>
+                <div className="text-sm text-black/70 leading-relaxed pt-0.5">{p.t}</div>
               </li>
             ))}
           </ul>
         ) : (
           <>
             <p className="text-sm text-black/50 mb-5">Ned enjoys doing pieces of work that allow him to:</p>
-            <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2">
+            <ul className="grid md:grid-cols-2 gap-x-8 gap-y-3">
               {WORK_PREFS.map((w) => (
-                <li key={w} className="text-sm text-black/70 leading-relaxed flex gap-2">
-                  <span style={{ color: ACCENT }} className="shrink-0">—</span>{w}
+                <li key={w.t} className="flex gap-3">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
+                    <Icon name={w.icon} size={14} color={ACCENT} />
+                  </div>
+                  <div className="text-sm text-black/70 leading-relaxed pt-0.5">{w.t}</div>
                 </li>
               ))}
             </ul>
@@ -333,7 +339,7 @@ export default function Profile() {
 
       {/* EXPERTISE */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Functional & Technical Depth" title="What are my areas of expertise?" icon="cube" />
+        <SectionHeader eyebrow="03 — Functional & Technical Depth" title="What are my areas of expertise?" icon="cube" />
         <p className="text-sm text-black/50 mb-6 max-w-xl">
           On paper, a Transformation Lead. In practice, working at the intersection of Strategy, Operations, Product, Data, Programming, Change, Finance and Management.
         </p>
@@ -341,7 +347,7 @@ export default function Profile() {
           {FUNCTIONAL.map((f) => {
             const highlights = CAREER_HIGHLIGHTS[f.cat] || [];
             return (
-              <a key={f.cat} href={explorerLink({ cat: f.cat })} className="bg-white rounded-lg border border-black/10 p-3.5 flex flex-col hover:border-black/25 transition-colors">
+              <a key={f.cat} href={explorerLink({ cat: f.cat })} className="bg-white rounded-lg border border-black/10 p-5 flex flex-col hover:border-black/25 transition-colors">
                 <div className="flex gap-3">
                   <div className="w-9 h-9 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
                     <Icon name={f.icon} size={16} color={ACCENT} />
@@ -382,15 +388,19 @@ export default function Profile() {
 
       {/* CAREER JOURNEY */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Work History" title="What is my professional journey?" icon="chart" />
+        <SectionHeader eyebrow="04 — Work History" title="What is my professional journey?" icon="chart" />
         <p className="text-[11px] text-black/40 mb-2">Click a company or role below to explore its evidence →</p>
 
         <div>
           {timeline.length === 0 && <p className="text-sm text-black/40 font-mono">Loading timeline…</p>}
           {timeline.map((t, i) => (
-            <div key={i} className="flex gap-6 py-5 border-b border-black/10 last:border-0">
-              <div className="font-mono text-xs text-black/40 w-24 shrink-0 pt-1">{t.years}</div>
-              <div>
+            <div key={i} className="flex gap-6">
+              <div className="font-mono text-xs text-black/40 w-24 shrink-0 pt-1 text-right">{t.years}</div>
+              <div className="relative flex flex-col items-center w-4 shrink-0">
+                <div className="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style={{ background: ACCENT }} />
+                {i < timeline.length - 1 && <div className="w-px flex-1 mt-1" style={{ background: `${ACCENT}30` }} />}
+              </div>
+              <div className="flex-1 pb-6">
                 <div className="font-display font-semibold text-sm">
                   <a href={explorerLink({ company: t.org, jobRole: t.role, groupBy: "role" })}
                     className="hover:underline underline-offset-2" style={{ color: INK }}>{t.role}</a>
@@ -407,15 +417,15 @@ export default function Profile() {
 
       {/* EDUCATION & QUALIFICATIONS */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Education & Certifications" title="What are my qualifications?" icon="cap" />
+        <SectionHeader eyebrow="05 — Education & Certifications" title="What are my qualifications?" icon="cap" />
         <div className="grid md:grid-cols-2 gap-10">
           <div>
-            <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Education</div>
+            <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3 pb-2 border-b border-black/10">Education</div>
             <ul className="space-y-3">
               {EDUCATION.map((e) => (
                 <li key={e.i} className="flex gap-3 items-start">
                   <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${ACCENT}12` }}>
-                    <Icon name="cap" size={15} color={ACCENT} />
+                    <Icon name={e.icon} size={15} color={ACCENT} />
                   </div>
                   <div>
                     <div className="text-sm font-medium">{e.i}</div>
@@ -426,10 +436,10 @@ export default function Profile() {
             </ul>
           </div>
           <div>
-            <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Certifications</div>
+            <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3 pb-2 border-b border-black/10">Certifications</div>
             <div className="grid grid-cols-2 gap-3">
               {QUALIFICATIONS.map((q) => (
-                <div key={q.cert} className="bg-white rounded-lg border border-black/10 p-3 flex flex-col items-center text-center gap-1.5">
+                <div key={q.cert} className="bg-white rounded-lg border border-black/10 p-4 flex flex-col items-center text-center gap-1.5">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: `${ACCENT}15` }}>
                     <Icon name="medal" size={20} color={ACCENT} />
                   </div>
@@ -444,12 +454,13 @@ export default function Profile() {
 
       {/* TESTIMONIALS */}
       <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="Testimonials" title="What do people say about me?" icon="quote" />
-        <div className="grid md:grid-cols-2 gap-4">
+        <SectionHeader eyebrow="06 — Testimonials" title="What do people say about me?" icon="quote" />
+        <div className="grid md:grid-cols-2 gap-5">
           {TESTIMONIALS.filter((t) => testimonialText[t.title]).map((t) => (
-            <div key={t.title} className="bg-white rounded-lg border border-black/10 border-l-4 p-4" style={{ borderLeftColor: ACCENT }}>
-              <p className="text-sm text-black/70 italic leading-relaxed">"{testimonialText[t.title].quote}"</p>
-              <div className="font-mono text-[11px] text-black/40 mt-3">— {testimonialText[t.title].source}</div>
+            <div key={t.title} className="bg-white rounded-lg border border-black/10 border-l-4 p-6" style={{ borderLeftColor: ACCENT }}>
+              <Icon name="quote" size={26} color={`${ACCENT}45`} />
+              <p className="text-sm text-black/70 italic leading-relaxed mt-2">{testimonialText[t.title].quote}</p>
+              <div className="font-mono text-[11px] text-black/40 mt-4">— {testimonialText[t.title].source}</div>
             </div>
           ))}
         </div>
@@ -458,15 +469,15 @@ export default function Profile() {
       {/* CTA */}
       <footer className="max-w-6xl mx-auto px-6 py-16 border-t border-black/10">
         <div className="grid grid-cols-3 gap-3 mb-10">
-          <a href={explorerLink({ tier: "highlighted" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
+          <a href={explorerLink({ tier: "highlighted" })} className="bg-white rounded-lg border border-black/10 p-5 text-center hover:border-black/25 transition-colors">
             <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>4</div>
             <div className="text-[11px] font-mono text-black/40 mt-1">Highlighted achievements</div>
           </a>
-          <a href={explorerLink({ type: "award" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
+          <a href={explorerLink({ type: "award" })} className="bg-white rounded-lg border border-black/10 p-5 text-center hover:border-black/25 transition-colors">
             <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>6</div>
             <div className="text-[11px] font-mono text-black/40 mt-1">Awards</div>
           </a>
-          <a href={explorerLink({ type: "review" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
+          <a href={explorerLink({ type: "review" })} className="bg-white rounded-lg border border-black/10 p-5 text-center hover:border-black/25 transition-colors">
             <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>2</div>
             <div className="text-[11px] font-mono text-black/40 mt-1">Reviews</div>
           </a>
@@ -486,8 +497,7 @@ export default function Profile() {
           <a href="mailto:nedyuen@gmail.com" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
             <Icon name="mail" size={14} color="currentColor" />Email
           </a>
-          {/* Placeholder URL — Ned needs to fill in his real LinkedIn profile link. */}
-          <a href="https://linkedin.com/in/PLACEHOLDER" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
+          <a href="https://www.linkedin.com/in/nedyuen/" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
             <Icon name="link" size={14} color="currentColor" />LinkedIn
           </a>
         </div>
