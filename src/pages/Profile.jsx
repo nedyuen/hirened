@@ -8,18 +8,12 @@ const ACCENTS = { "JP Morgan": "#1F5C56", "Goldman Sachs": "#A9803F", "Morgan St
 const CONTEXT = {
   Industries: ["Investment Banking", "Technology Consulting"],
   Companies: ["UBS", "Morgan Stanley", "Goldman Sachs", "JP Morgan", "Accenture"],
-  Divisions: ["Operations", "Sales & Trading", "Strategy & Consulting", "Transformation"],
   Functions: ["Securities Operations", "Trade Execution", "Technical Program Delivery", "Product Management", "People Management"],
 };
 
 const SUMMARY = [
-  "Senior Strategy and Transformation Lead",
-  "13 years of experience in investment banking and technology consulting",
-  "Led and oversaw 18 large-scale, cross-functional strategic initiatives",
-  "Track record of delivering impact through data-driven advisory, process optimisation and technical product delivery",
-  "Strong Capital Markets domain knowledge covering front-to-back processes, products, and industry practices",
-  "Adept at combining interdisciplinary skills to deliver high quality outcomes",
-  "PRINCE2 and Agile Scrum certified",
+  "Ned is a Senior Strategy and Transformation Lead with 13 years of experience across investment banking and technology consulting. Over that time he has led and overseen 18 large-scale, cross-functional strategic initiatives, drawing on deep Capital Markets domain knowledge that spans front-to-back processes, products, and industry practices.",
+  "His track record is built on data-driven advisory, process optimisation, and technical product delivery — combining interdisciplinary skills to produce high-quality outcomes wherever the work sits. He is PRINCE2 and Agile Scrum certified.",
 ];
 
 const REASONS = [
@@ -45,17 +39,6 @@ const PERSONALITY = [
   "Inquisitive and competitive — obsessive about learning and broadening his skill set",
   "Over-thinker and over-preparer — tracks and reflects on everything, highly self-aware",
   "Motivated by winning people over and earning recognition through visible, high-quality output",
-];
-
-const STRENGTHS = [
-  { t: "High performer, not just a doer", d: "Delivers high-quality, polished work that consistently impresses stakeholders. Takes pride in excellence, never settles for the minimum." },
-  { t: "Multi-disciplinary and highly adaptable", d: "A rare blend of finance, operations, data, technical tooling, design, and automation skills. Moves across functions and connects concepts." },
-  { t: "Structured, analytical thinker", d: "Brings clarity to complexity — breaking down messy processes, consolidating information thoroughly, presenting ideas clearly." },
-  { t: "Hands-on and execution-focused", d: "Prioritises action over talk. Moves quickly, produces tangible outcomes, maintains strong attention to detail." },
-  { t: "Systems and quality obsessed", d: "Creates order from chaos, tracks meticulously, maintains high consistency and standards." },
-  { t: "Creative and improvement-driven", d: "Energised by ideas, constantly thinking of better ways to do things, brave enough to challenge default approaches." },
-  { t: "Relentless learner", d: "Actively upgrades knowledge across finance, tools and technology; reflects deeply and pushes to improve every cycle." },
-  { t: "Achievement-oriented with strong ownership", d: "Cares about outcomes, reputation and mastery — that drive translates into real results." },
 ];
 
 const WORK_PREFS = [
@@ -94,8 +77,9 @@ const CAREER_HIGHLIGHTS = {
 };
 
 // Local copy of only the 8 refs above (bullet/goal text), word-for-word identical to Explorer.jsx's
-// PROJECTS/ROLE_EVIDENCE — same minimal-local-copy pattern as COMPANIES_ROLES, not the full dataset.
-// If Explorer's wording changes, update the source there first, then copy it here.
+// PROJECTS/ROLE_EVIDENCE — a minimal local copy, not the full dataset (same pattern used elsewhere on
+// this page, e.g. TIMELINE below, rather than importing across page files). If Explorer's wording
+// changes, update the source there first, then copy it here.
 const HIGHLIGHT_TEXT = {
   "Prime Transformation": "Driving the business transformation agenda for the Prime business.",
   "Trade reporting control framework": "Designed and implemented a front-to-back reconciliation and control framework for trade reporting.",
@@ -125,25 +109,20 @@ const TESTIMONIAL_TEXT = {
 
 const TECHNICAL = ["Python", "SQL", "JavaScript", "HTML", "Excel / VBA", "Alteryx", "Power Automate", "Power Apps", "Tableau", "Claude Code", "Google AI Studio", "NLTK", "Scikit-Learn", "API Integration", "IBM Cloud", "Figma", "JIRA"];
 
+// ASSUMPTION — Accenture split: see the matching, more detailed comment in Explorer.jsx's ROLES array.
+// Ned's job title didn't change between secondments, only the client — hence the " — <client> secondment"
+// suffix rather than a distinct title. Date boundary (2017–2019 / 2019–2021) is inferred from real evidence
+// years (Morgan Stanley project dated 2018, Goldman Sachs projects dated 2019); confirm/correct with Ned.
+// `role` strings below must match Explorer.jsx's ROLES[].title exactly — they're used as the `jobRole`
+// param when linking into the Explorer (see the timeline rendering below). Where the display text carries
+// more detail than the stint title (e.g. "Sales Associate, Front Office" vs. Explorer's "Sales Associate"),
+// an explicit `jobRole` override is set so the link still matches; entries without one link using `role` as-is.
 const TIMELINE = [
   { org: "UBS", role: "Operations Analyst", years: "2012–2016", d: "Rates MO Risk & Trade Control, Desk Services, OTC Confirmations, ETD Regulatory Reporting." },
-  { org: "UBS", role: "Sales Associate, Front Office", years: "2016–2017", d: "Flow Rates hedge fund desk and LDI desk — pricing, execution and client rebalancing." },
-  { org: "Accenture", role: "Consulting Manager", years: "2017–2021", d: "Seconded as PM at Goldman Sachs (Global Markets Equities) and BA at Morgan Stanley (Trade Reporting Controls)." },
+  { org: "UBS", role: "Sales Associate, Front Office", jobRole: "Sales Associate", years: "2016–2017", d: "Flow Rates hedge fund desk and LDI desk — pricing, execution and client rebalancing." },
+  { org: "Accenture", role: "Consulting Manager — Morgan Stanley secondment", years: "2017–2019", d: "Seconded as Business Analyst at Morgan Stanley (Trade Reporting Controls)." },
+  { org: "Accenture", role: "Consulting Manager — Goldman Sachs secondment", years: "2019–2021", d: "Seconded as Project Manager at Goldman Sachs (Global Markets Equities)." },
   { org: "JP Morgan", role: "Transformation Vice President", years: "2021–Present", d: "Securities Ops Transformation → Markets Ops Platform Transformation → Markets Regulatory Control Transformation." },
-];
-
-// Compact Company → Role diagram for the Career Journey section — two levels only, not exploded to projects (that's the Explorer's job).
-const COMPANIES_ROLES = [
-  { company: "UBS", roles: [
-    { title: "Operations Analyst", years: "2012–2016" },
-    { title: "Sales Associate", years: "2016–2017" },
-  ]},
-  { company: "Accenture", roles: [
-    { title: "Consulting Manager", years: "2017–2021" },
-  ]},
-  { company: "JP Morgan", roles: [
-    { title: "Transformation Vice President", years: "2021–Present" },
-  ]},
 ];
 
 const EDUCATION = [
@@ -177,12 +156,31 @@ const ICONS = {
   cap: "M12 3L2 8l10 5 10-5-10-5zM6 10.5V17s2.5 3 6 3 6-3 6-3v-6.5",
   medal: "M12 8a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM8.5 13 7 21l5-2.5L17 21l-1.5-8",
   quote: "M7 8h3v4H7c0 2.2-1 3.5-2 4M15 8h3v4h-3c0 2.2-1 3.5-2 4",
+  mail: "M4 6h16v12H4zM4 6l8 6 8-6",
+  link: "M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3",
 };
 function Icon({ name, size = 18, color = INK, strokeWidth = 1.6 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
       <path d={ICONS[name]} />
     </svg>
+  );
+}
+
+// Placeholder path — Ned needs to supply a real photo at public/headshot-placeholder.jpg (the file doesn't
+// exist yet, so this intentionally 404s until then). Falls back to an "NY" initials circle if the image
+// fails to load, so the hero layout doesn't visibly break while the real photo is still missing.
+function Headshot({ size = 80 }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  if (imgFailed) {
+    return (
+      <div className="rounded-full flex items-center justify-center shrink-0 font-display font-semibold text-white"
+        style={{ width: size, height: size, background: ACCENT, fontSize: size * 0.34 }}>NY</div>
+    );
+  }
+  return (
+    <img src="/headshot-placeholder.jpg" alt="Ned Yuen" onError={() => setImgFailed(true)}
+      className="rounded-full object-cover shrink-0 border border-black/10" style={{ width: size, height: size }} />
   );
 }
 
@@ -209,7 +207,7 @@ function SectionHeader({ eyebrow, title, icon }) {
 }
 
 export default function Profile() {
-  const [openStrength, setOpenStrength] = useState(null);
+  const [aboutTab, setAboutTab] = useState("personality");
 
   return (
     <div className="min-h-screen bg-[#F2F3EF] text-ink font-body">
@@ -229,23 +227,28 @@ export default function Profile() {
             <span className="font-mono text-xs px-3 py-1.5 rounded-full text-white" style={{ background: ACCENT }}>Career Profile</span>
             <a href={EXPLORER_URL} className="font-mono text-xs px-3 py-1.5 rounded-full border border-black/15 text-black/60 hover:border-black/30">Achievement Explorer</a>
             <a href={INTERVIEW_URL} className="font-mono text-xs px-3 py-1.5 rounded-full border border-black/15 text-black/60 hover:border-black/30">Interview Mode</a>
+            {/* Placeholder implementation: plain mailto link. Intended future behavior is a lightweight
+                purpose-selector modal ("Request my CV" / "Discuss an opportunity" / "Just want to connect"),
+                each prefilling a different message template — not built yet. */}
+            <a href="mailto:nedyuen@gmail.com" className="font-mono text-xs font-semibold px-4 py-2 rounded-full text-white ml-1 hover:opacity-90 transition-opacity" style={{ background: ACCENT }}>Contact Me</a>
           </div>
         </div>
       </div>
 
       {/* HERO / CAREER PROFILE */}
       <header className="max-w-4xl mx-auto px-6 pt-14 pb-10">
-        <div className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: ACCENT }}>Career Profile</div>
+        <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>Professional Summary</div>
         <h1 className="font-display text-4xl md:text-5xl font-semibold leading-[1.05] tracking-tight max-w-2xl">
           Senior Strategy &amp; Transformation Lead, 13 years inside Capital Markets.
         </h1>
-        <ul className="mt-6 space-y-1.5 max-w-xl">
-          {SUMMARY.map((s) => (
-            <li key={s} className="text-sm text-black/70 flex gap-2 leading-relaxed">
-              <span style={{ color: ACCENT }}>—</span>{s}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-6 flex flex-col sm:flex-row-reverse gap-6 sm:gap-8 items-start">
+          <Headshot size={160} />
+          <div className="space-y-3 max-w-xl flex-1 min-w-0">
+            {SUMMARY.map((s) => (
+              <p key={s} className="text-sm text-black/70 leading-relaxed">{s}</p>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-8 grid sm:grid-cols-2 gap-4">
           {Object.entries(CONTEXT).map(([k, vals]) => (
@@ -257,11 +260,21 @@ export default function Profile() {
             </div>
           ))}
         </div>
+
+        <div className="mt-8">
+          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">Roles I'm looking for</div>
+          <div className="flex flex-wrap gap-2">
+            {ROLES.map((r) => (
+              <a key={r} href={explorerLink({ preset: r })} className="font-mono text-xs px-3 py-1.5 rounded-full border hover:text-white transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
+                onMouseEnter={(e) => e.currentTarget.style.background = ACCENT} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{r}</a>
+            ))}
+          </div>
+        </div>
       </header>
 
       {/* REASONS TO HIRE */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="01 — Why hire me" title="Reasons to hire" icon="target" />
+        <SectionHeader eyebrow="Why Hire Me" title="Why should you hire me?" icon="target" />
         <div className="grid md:grid-cols-2 gap-x-10 gap-y-6">
           {REASONS.map((r) => (
             <div key={r.t} className="flex gap-3">
@@ -275,22 +288,20 @@ export default function Profile() {
             </div>
           ))}
         </div>
-        <div className="mt-8">
-          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">Roles I'm looking for</div>
-          <div className="flex flex-wrap gap-2">
-            {ROLES.map((r) => (
-              <a key={r} href={explorerLink({ preset: r })} className="font-mono text-xs px-3 py-1.5 rounded-full border hover:text-white transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
-                onMouseEnter={(e) => e.currentTarget.style.background = ACCENT} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{r}</a>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ABOUT ME */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="02 — About me" title="Personality & strengths" icon="spark" />
-        <div className="mb-8">
-          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Personality</div>
+        <SectionHeader eyebrow="Personality & Motivators" title="What am I like to work with?" icon="spark" />
+        <div className="flex gap-2 mb-6">
+          <button onClick={() => setAboutTab("personality")}
+            className={`px-4 py-2 rounded-md text-sm font-mono border ${aboutTab === "personality" ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+            style={aboutTab === "personality" ? { background: ACCENT } : {}}>Personality</button>
+          <button onClick={() => setAboutTab("workstyle")}
+            className={`px-4 py-2 rounded-md text-sm font-mono border ${aboutTab === "workstyle" ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
+            style={aboutTab === "workstyle" ? { background: ACCENT } : {}}>Work Style</button>
+        </div>
+        {aboutTab === "personality" ? (
           <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2">
             {PERSONALITY.map((p) => (
               <li key={p} className="text-sm text-black/70 leading-relaxed flex gap-2">
@@ -298,41 +309,21 @@ export default function Profile() {
               </li>
             ))}
           </ul>
-        </div>
-        <div>
-          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Strengths</div>
-          <div className="grid md:grid-cols-2 gap-3">
-            {STRENGTHS.map((s, i) => {
-              const open = openStrength === i;
-              return (
-                <button key={s.t} onClick={() => setOpenStrength(open ? null : i)}
-                  className="text-left bg-white rounded-lg border border-black/10 p-3.5 hover:border-black/25 transition-colors">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon name="spark" size={14} color={ACCENT} />
-                    <div className="font-display font-semibold text-sm">{s.t}</div>
-                  </div>
-                  {open && <div className="text-xs text-black/60 mt-2 leading-relaxed">{s.d}</div>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* WORK PREFERENCES */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="03 — Work style" title="What kind of work motivates me" icon="path" />
-        <p className="text-sm text-black/50 mb-5">Ned enjoys doing pieces of work that allow him to:</p>
-        <div className="grid md:grid-cols-2 gap-3">
-          {WORK_PREFS.map((w) => (
-            <div key={w} className="bg-white rounded-lg border border-black/10 p-3.5 text-sm text-black/70 leading-relaxed">{w}</div>
-          ))}
-        </div>
+        ) : (
+          <>
+            <p className="text-sm text-black/50 mb-5">Ned enjoys doing pieces of work that allow him to:</p>
+            <div className="grid md:grid-cols-2 gap-3">
+              {WORK_PREFS.map((w) => (
+                <div key={w} className="bg-white rounded-lg border border-black/10 p-3.5 text-sm text-black/70 leading-relaxed">{w}</div>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* EXPERTISE */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="04 — Range" title="Functional & technical expertise" icon="cube" />
+        <SectionHeader eyebrow="Functional & Technical Depth" title="What are my areas of expertise?" icon="cube" />
         <p className="text-sm text-black/50 mb-6 max-w-xl">
           On paper, a Transformation Lead. In practice, working at the intersection of Strategy, Operations, Product, Data, Programming, Change, Finance and Management.
         </p>
@@ -378,39 +369,21 @@ export default function Profile() {
 
       {/* CAREER JOURNEY */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="05 — Track record" title="Career journey" icon="chart" />
-
-        <div className="mb-8">
-          <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Company → Role <span className="normal-case text-black/30">(click to explore evidence)</span></div>
-          <div className="space-y-2">
-            {COMPANIES_ROLES.map((c) => (
-              <div key={c.company} className="flex flex-col sm:flex-row sm:items-stretch gap-2">
-                <a href={explorerLink({ company: c.company, groupBy: "company" })}
-                  className="sm:w-44 shrink-0 rounded-lg border p-3 flex items-center transition-colors hover:shadow-sm"
-                  style={{ borderColor: `${ACCENTS[c.company]}40`, background: `${ACCENTS[c.company]}0d` }}>
-                  <span className="font-display font-semibold text-sm" style={{ color: ACCENTS[c.company] }}>{c.company}</span>
-                </a>
-                <div className="flex-1 flex flex-wrap gap-2 relative">
-                  <div className="hidden sm:block absolute -left-2 top-1/2 -translate-y-1/2 w-2 h-px" style={{ background: `${ACCENTS[c.company]}40` }} />
-                  {c.roles.map((r) => (
-                    <a key={r.title} href={explorerLink({ company: c.company, jobRole: r.title, groupBy: "role" })}
-                      className="rounded-lg border border-black/10 bg-white px-3 py-2 hover:border-black/25 transition-colors">
-                      <div className="text-xs font-medium">{r.title}</div>
-                      <div className="font-mono text-[10px] text-black/40">{r.years}</div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <SectionHeader eyebrow="Work History" title="What is my professional journey?" icon="chart" />
+        <p className="text-[11px] text-black/40 mb-2">Click a company or role below to explore its evidence →</p>
 
         <div>
           {[...TIMELINE].reverse().map((t, i) => (
             <div key={i} className="flex gap-6 py-5 border-b border-black/10 last:border-0">
               <div className="font-mono text-xs text-black/40 w-24 shrink-0 pt-1">{t.years}</div>
               <div>
-                <div className="font-display font-semibold text-sm">{t.role} · <span style={{ color: ACCENTS[t.org] }}>{t.org}</span></div>
+                <div className="font-display font-semibold text-sm">
+                  <a href={explorerLink({ company: t.org, jobRole: t.jobRole || t.role, groupBy: "role" })}
+                    className="hover:underline underline-offset-2" style={{ color: INK }}>{t.role}</a>
+                  {" · "}
+                  <a href={explorerLink({ company: t.org, groupBy: "company" })}
+                    className="hover:underline underline-offset-2" style={{ color: ACCENTS[t.org] }}>{t.org}</a>
+                </div>
                 <div className="text-sm text-black/60 mt-1 leading-relaxed">{t.d}</div>
               </div>
             </div>
@@ -420,7 +393,7 @@ export default function Profile() {
 
       {/* EDUCATION & QUALIFICATIONS */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="06 — Education & qualifications" title="Formal education & certifications" icon="cap" />
+        <SectionHeader eyebrow="Education & Certifications" title="What are my qualifications?" icon="cap" />
         <div className="grid md:grid-cols-2 gap-10">
           <div>
             <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Education</div>
@@ -457,7 +430,7 @@ export default function Profile() {
 
       {/* TESTIMONIALS */}
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
-        <SectionHeader eyebrow="07 — In their words" title="What others say" icon="quote" />
+        <SectionHeader eyebrow="Testimonials" title="What do people say about me?" icon="quote" />
         <div className="grid md:grid-cols-2 gap-4">
           {TESTIMONIALS.map((t) => (
             <div key={t.title} className="bg-white rounded-lg border border-black/10 border-l-4 p-4" style={{ borderLeftColor: ACCENT }}>
@@ -471,7 +444,7 @@ export default function Profile() {
       {/* CTA */}
       <footer className="max-w-4xl mx-auto px-6 py-16 border-t border-black/10">
         <div className="grid grid-cols-3 gap-3 mb-10">
-          <a href={explorerLink({ tier: "signature" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
+          <a href={explorerLink({ tier: "highlighted" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
             <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>◆ 4</div>
             <div className="text-[11px] font-mono text-black/40 mt-1">Signature achievements</div>
           </a>
@@ -493,6 +466,15 @@ export default function Profile() {
           </div>
           <a href={EXPLORER_URL} className="font-mono text-sm px-5 py-3 rounded-full text-white text-center shrink-0" style={{ background: ACCENT }}>
             Browse the Achievement Explorer →
+          </a>
+        </div>
+        <div className="flex items-center gap-5 mt-8 pt-8 border-t border-black/10">
+          <a href="mailto:nedyuen@gmail.com" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
+            <Icon name="mail" size={14} color="currentColor" />nedyuen@gmail.com
+          </a>
+          {/* Placeholder URL — Ned needs to fill in his real LinkedIn profile link. */}
+          <a href="https://linkedin.com/in/PLACEHOLDER" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
+            <Icon name="link" size={14} color="currentColor" />LinkedIn
           </a>
         </div>
       </footer>

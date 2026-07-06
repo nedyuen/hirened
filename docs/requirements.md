@@ -174,27 +174,31 @@ Company then Role then Project then Delivery role then Expertise then Type, alwa
 
 ## 3. Career Profile page (/)
 
-Sections, in order, sourced from the real Notion professional site:
+Nav bar carries a fourth element beyond the three page links: a filled "Contact Me" button, top-right, visually distinct from the outlined page-nav chips (reads as the page's primary action, not another nav destination). Currently a plain `mailto:` link — placeholder for an intended future purpose-selector modal ("Request my CV" / "Discuss an opportunity" / "Just want to connect"), each prefilling a different message template. Not built yet.
 
-1. **Career Profile / hero** — headline, high-level summary, context tags
-2. **Reasons to Hire** — 7 traits, icon-badged. Each trait is a clickable chip linking to the Explorer with the matching target-role preset applied (section 4.6).
-3. **Roles I'm looking for** — chip list (8 roles; 2 originally-listed roles removed on request), each linking to its matching target-role preset in the Explorer
-4. **About Me** — Personality (7 traits) + Strengths (8 items, click-to-expand)
-5. **Work Style** — 6 "what motivates me" preferences
-6. **Expertise** — Functional Expertise (8 category cards, icon-badged) + Technical Toolkit (17 real tools, each linking to the Explorer filtered by that tool name). Each Functional Expertise card now also shows 1-2 example proof bullets, pulled — not re-authored — from real evidence/project data via a maintained CAREER_HIGHLIGHTS mapping (category to either a specific achievement's bullet, for a sharp metric-driven example, or a project's goal, for a more general one). The card's existing single click-through to the Explorer is unchanged; the example bullets are always-visible static text, not a second interactive element on the same card.
-7. **Career Journey** — timeline, latest first, plus a compact Company-to-Role diagram (two levels only, deliberately not exploding to all 17 projects). Every node links into the Explorer with filters pre-applied.
-8. **Testimonials** — 2-3 hand-picked reviews, referenced (not re-typed) from Explorer review evidence via a maintained TESTIMONIALS mapping, placed right before the footer CTA. Reviews were not split into a separate page/system (section 4.1) — this section is a curated front door onto content that still fully lives in the Explorer's Type filter.
-9. **Education & Certifications** — certifications rendered as visual badges, not a plain list
-10. **Footer CTA** — clickable stat strip (Signature/Awards/Reviews counts) + "Browse the Achievement Explorer" button
+Sections, in order, sourced from the real Notion professional site. Each numbered heading below is a **SectionHeader eyebrow / bold-title pair** — the eyebrow is a short plain label, the bold title is a hook phrased as a question (a deliberate style decision: eyebrow=label, title=question, no numbered prefixes). Hero is the exception — no question treatment, just a plain small label ("Professional Summary") above the unchanged headline.
+
+Also new: a small headshot sits beside the hero's eyebrow/headline (circular, ~80px, restrained — not a dominant banner photo). Points at `/headshot-placeholder.jpg`, which doesn't exist yet (Ned needs to supply a real photo there); falls back to a circular "NY" initials avatar if the image fails to load, so the hero doesn't visibly break in the meantime.
+
+1. **Hero** — eyebrow "Professional Summary", headline unchanged, then a 2-paragraph prose professional summary (not a bullet list — rewritten as flowing sentences covering years of experience, programs led, domain expertise, positioning, and certifications). Context tags (Industries, Companies, Functions — **Divisions removed**, judged redundant alongside the other three) come next. **Roles I'm looking for** — chip list (8 roles; 2 originally-listed roles removed on request), each linking to its matching target-role preset in the Explorer — closes out the hero, right after the context tags.
+2. **Reasons to Hire** — eyebrow "Why Hire Me", title "Why should you hire me?". 7 traits, icon-badged. Each trait is a clickable chip linking to the Explorer with the matching target-role preset applied (section 4.6). (Roles I'm looking for used to live in this section; moved up into the hero, see above.)
+3. **About Me** — eyebrow "Personality & Motivators", title "What am I like to work with?". Merged Personality/Work Style section, one card, toggled via two clearly-labeled tabs ("Personality" / "Work Style"; default view is Personality). Personality: 7 traits. Work Style: 6 "what motivates me" preferences. This replaces what were previously two separate sections (About Me, Work Style). **Strengths (8 items, click-to-expand) was removed entirely** — judged duplicative with Reasons to Hire, both being "why hire me"-framed content.
+4. **Expertise** — eyebrow "Functional & Technical Depth", title "What are my areas of expertise?". Functional Expertise (8 category cards, icon-badged) + Technical Toolkit (17 real tools, each linking to the Explorer filtered by that tool name). Each Functional Expertise card also shows 1-2 example proof bullets, pulled — not re-authored — from real evidence/project data via a maintained CAREER_HIGHLIGHTS mapping (category to either a specific achievement's bullet, for a sharp metric-driven example, or a project's goal, for a more general one). The card's existing single click-through to the Explorer is unchanged; the example bullets are always-visible static text, not a second interactive element on the same card.
+5. **Career Journey** — eyebrow "Work History", title "What is my professional journey?". Timeline only, latest first. **The compact Company→Role diagram was removed** — the timeline below it already showed the same company/role facts, so the diagram was redundant. Instead, the timeline entries themselves are now the link surface: each entry's role text and company text are independently clickable (role → Explorer filtered to that job-title role + `groupBy=role`; company → filtered to that company + `groupBy=company`), styled with underline-on-hover rather than looking like separate buttons bolted onto the row.
+6. **Education & Certifications** — eyebrow "Education & Certifications", title "What are my qualifications?". Certifications rendered as visual badges, not a plain list.
+7. **Testimonials** — eyebrow "Testimonials", title "What do people say about me?". 2-3 hand-picked reviews, referenced (not re-typed) from Explorer review evidence via a maintained TESTIMONIALS mapping, placed right before the footer CTA. Reviews were not split into a separate page/system (section 4.1) — this section is a curated front door onto content that still fully lives in the Explorer's Type filter.
+8. **Footer CTA** — clickable stat strip (Signature/Awards/Reviews counts) + "Browse the Achievement Explorer" button, plus email (`mailto:`) and LinkedIn (placeholder URL — Ned to fill in the real profile link) contact links.
+
+**Reviewed and kept as-is:** 5 of the 6 section titles above share a near-identical "What is/are/am I ___?" question template back-to-back, which risks reading FAQ-like when scrolled straight through. Ned looked at the rendered page and explicitly chose to keep all 6 as questions rather than vary the phrasing or revert some to plain labels — don't re-relitigate this without new input from Ned.
 
 Explicitly excluded: Personal Life, Analysis Style, Management Style, Learning, and a "Capital Markets Domain" section (built, then removed on request). Business Projects/Technical Work/Publications live as Evidence in the Explorer, not here.
 
 ### Page-linkage behavior (Profile to Explorer)
 
-Every cross-link uses URL query params, read by the Explorer on mount: type, q, cat, role, tier, preset, company, audience, groupBy.
+Every cross-link uses URL query params, read by the Explorer on mount: type, q, cat, **jobRole** (job-title Role — distinct from `role`, which is the Delivery-role param), tier, preset, company, audience, groupBy.
 
 - Reasons to Hire chips and Roles-I'm-looking-for chips link with a preset param, applying the matching TARGET_ROLES entry.
-- Career Journey diagram nodes: clicking a company sets company and groupBy=company; clicking a role sets the matching role filter and groupBy=role.
+- Career Journey timeline entries: clicking a company name sets `company` and `groupBy=company`; clicking a role/title name sets `company` + `jobRole` (matching Explorer's `ROLES[].title` exactly) and `groupBy=role`.
 - Any arrival with filter params already present: the Explorer's Filters panel defaults to collapsed (active-filters summary strip stays visible). Arriving via the plain nav link with no params: panel defaults expanded.
 
 Caveat: this mechanism only becomes a real cross-page jump once all three pages are actual routes on one deployed site.
@@ -351,7 +355,9 @@ Static Vite build to Vercel, with the SPA rewrite noted above.
 
 ## 8. Real content inventory (from Notion, not fabricated)
 
-Companies/Roles: UBS — Operations Analyst (2012-16), Sales Associate (2016-17). Accenture — Consulting Manager (2017-21), seconded to Goldman Sachs and Morgan Stanley. JP Morgan — Transformation Vice President (2021-present), three phases.
+Companies/Roles: UBS — Operations Analyst (2012-16), Sales Associate (2016-17). Accenture — Consulting Manager (2017-21), **now split into two job-stint entries** rather than one combined stint: "Consulting Manager — Morgan Stanley secondment" (2017-19) and "Consulting Manager — Goldman Sachs secondment" (2019-21). The job title itself didn't change between secondments (unlike UBS's genuine Operations Analyst → Sales Associate title change) — only the client did — so the two stints share one title, differentiated by a client-secondment suffix rather than a real title change. JP Morgan — Transformation Vice President (2021-present), three phases.
+
+**The Accenture split's date boundary is inferred, not confirmed** — Ned should verify. It's derived from real evidence dates: the Morgan Stanley project (Control Framework) is dated 2018; the three Goldman Sachs projects (Corporate Actions, Matching/Shaping/Allocation, Booking and Control) are all dated 2019. The chosen boundary (~Jan 2019) is the only one, given `resolveRole()`'s year-only (not date-only, and not client-aware) matching logic, that correctly resolves all four of these real, verified, `sample: false` achievement/review items to their correct secondment. One known side effect: `resolveRole()` has no access to an evidence item's own client field once it's translated to employer "Accenture" for stint lookup — it disambiguates by year alone. This mislabels one real item, "Star of the Month & Client Hero" (`company: "Goldman Sachs"`, year 2018), which resolves to the Morgan Stanley stint (its year falls only in that stint's range) despite being Goldman-Sachs-attributed. Flagged in code comments in both `Explorer.jsx` (ROLES array) and `Profile.jsx` (TIMELINE array) — not fixed, since a real fix would mean changing `resolveRole()`'s signature to accept the item's actual client, which was out of scope for the change that surfaced this.
 
 Projects (17 real): 3 under Goldman Sachs, 1 under Morgan Stanley, 13 under JP Morgan. Only 3 had real verified achievement write-ups (Corporate Actions, Control Framework, Data Science Solutions — all three flagged highlighted). The remaining 14 are placeholder/sample content — the single largest remaining task.
 
@@ -370,3 +376,7 @@ Reviews: currently 2, both still sample/placeholder content, surfaced in the Pro
 7. Responsibility is schema'd but not yet rendered anywhere in the UI.
 8. CAREER_HIGHLIGHTS/TESTIMONIALS reference by title/name string matching, not stable IDs.
 9. Reason-to-hire linking — deferred by design, see section 6.
+10. Accenture Morgan Stanley/Goldman Sachs secondment date boundary is inferred — Ned should confirm/correct the real dates (see section 8).
+11. `resolveRole()`'s year-only matching mislabels one real evidence item ("Star of the Month & Client Hero") under the wrong secondment — see section 8. Would need `resolveRole()` to accept the item's actual client to fix properly.
+12. Contact Me button is a placeholder `mailto:` link — intended future behavior is a purpose-selector modal (Request CV / Discuss an opportunity / Just want to connect), not built yet.
+13. LinkedIn footer link is a placeholder URL (`linkedin.com/in/PLACEHOLDER`) — Ned needs to fill in the real profile URL.

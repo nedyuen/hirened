@@ -12,13 +12,35 @@ const LEVELS = { company: "Company-level", role: "Role-level", project: "Project
 
 // Job stints — the actual "Role" level in Company → Role → Project → Evidence.
 // Distinct from a project's functional/delivery role (Product Manager, Business Analyst, etc).
+//
+// ASSUMPTION — Accenture split (Morgan Stanley / Goldman Sachs secondments): dates are INFERRED, not
+// confirmed. Ned's actual job title ("Consulting Manager") did not change between secondments — only
+// the client did — so unlike the UBS split these two stints share one title, differentiated by a
+// " — <client> secondment" suffix rather than a real title change. Boundary (2017.83–2019.0 / 2019.0–2021.58)
+// is inferred from real evidence dates: the Morgan Stanley project (Control Framework) is dated 2018; the
+// three Goldman Sachs projects (Corporate Actions, Matching/Shaping/Allocation, Booking and Control) are all
+// dated 2019. Ned should confirm/correct the real boundary date.
+// NOTE on array order: this pair is listed Goldman-Sachs-stint-first, Morgan-Stanley-stint-second —
+// deliberately reversed from chronological order. resolveRole() below only disambiguates by year (it has
+// no access to an evidence item's actual client field once translated to "Accenture"), and Math.floor/
+// Math.ceil widening makes 2019 match BOTH stints' ranges. Array.find() takes the first match, so listing
+// Goldman Sachs first makes the three real 2019 Goldman Sachs achievements resolve correctly; listing
+// Morgan Stanley first would mislabel them as "Morgan Stanley secondment". Do not "fix" this back to
+// chronological order without re-deriving the date math.
+// KNOWN LIMITATION surfaced by this split: "Star of the Month & Client Hero" (ROLE_EVIDENCE, company:
+// "Goldman Sachs", year: 2018) will resolve to the Morgan Stanley stint (its year falls only in that
+// range) even though it's actually Goldman-Sachs-attributed — resolveRole has no way to use the item's
+// own client field to disambiguate, only its year. Pre-existing limitation of resolveRole's design,
+// surfaced (not introduced) by adding a second Accenture-era stint. Flagging for Ned's awareness.
 const ROLES = [
   { company: "UBS", title: "Operations Analyst", start: 2012.42, end: 2016.33,
     description: "Rotated across Rates MO Risk Control, Trade Control, Desk Services, OTC Confirmations, and ETD Regulatory Reporting." },
   { company: "UBS", title: "Sales Associate", start: 2016.33, end: 2017.83,
     description: "Moved to Front Office on the Flow Rates hedge fund desk and LDI desk, pricing and executing OTC trades for clients." },
-  { company: "Accenture", title: "Consulting Manager", start: 2017.83, end: 2021.58,
-    description: "Seconded into Morgan Stanley and Goldman Sachs as Business Analyst and Project Manager on trade reporting and platform delivery programs." },
+  { company: "Accenture", title: "Consulting Manager — Goldman Sachs secondment", start: 2019.0, end: 2021.58,
+    description: "Seconded into Goldman Sachs as Project Manager on corporate actions and trade processing platform delivery programs." },
+  { company: "Accenture", title: "Consulting Manager — Morgan Stanley secondment", start: 2017.83, end: 2019.0,
+    description: "Seconded into Morgan Stanley as Business Analyst on trade reporting control framework delivery." },
   { company: "JP Morgan", title: "Transformation Vice President", start: 2021.67, end: 2026.5,
     description: "Led Securities Ops Transformation, then Markets Ops Platform Transformation, then Markets Regulatory Control Transformation." },
 ];
@@ -209,7 +231,7 @@ export default function Explorer() {
   const [groupBy, setGroupBy] = useState(initial.get("groupBy") || "company");
   const [expanded, setExpanded] = useState(null);
   const [showPlaceholders, setShowPlaceholders] = useState(true);
-  const [minTier, setMinTier] = useState(initial.get("tier") || "all"); // 'all' | 'notable' | 'signature'
+  const [minTier, setMinTier] = useState(initial.get("tier") || "all"); // 'all' | 'highlighted'
   const hasIncomingFilters = ["type", "cat", "role", "tier", "preset", "company", "audience", "q", "groupBy"].some((p) => initial.get(p));
   const [filtersOpen, setFiltersOpen] = useState(!hasIncomingFilters);
   const [activePreset, setActivePreset] = useState(initialPresetName);
