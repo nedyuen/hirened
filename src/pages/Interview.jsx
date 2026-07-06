@@ -30,7 +30,7 @@ export default function Interview() {
 
       {/* NAV */}
       <div className="sticky top-0 z-20 backdrop-blur bg-[#F2F3EF]/90 border-b border-black/10">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href={PROFILE_URL} className="font-display font-semibold tracking-tight">Ned Yuen</a>
           <div className="flex items-center gap-2">
             <a href={PROFILE_URL} className="font-mono text-xs px-3 py-1.5 rounded-full border border-black/15 text-black/60 hover:border-black/30">Career Profile</a>

@@ -18,13 +18,13 @@ const SUMMARY = [
 ];
 
 const REASONS = [
-  { t: "High performing", d: "Obsessed about crafting work to perfection — delivers outcomes with a wow factor, impressing everyone he works with." },
-  { t: "Multi-disciplinary", d: "Wears multiple hats, operating at the intersection of Strategy, Data, Operations, Product and Project." },
-  { t: "Highly analytical", d: "Digests complex information, building clarity to drive analysis and help people make sense of it." },
-  { t: "Highly methodical", d: "Creates structure to manage chaotic and ambiguous environments." },
-  { t: "Strong process improvement mindset", d: "Ideates and critically designs solutions to solve for inefficiencies." },
-  { t: "Tech savvy", d: "Picks up any new concepts quickly, and injects theory into practice." },
-  { t: "Capital Markets fluent", d: "Deep subject matter expertise having worked in most segments of the trade lifecycle." },
+  { t: "High performing", icon: "medal", d: "Obsessed about crafting work to perfection — delivers outcomes with a wow factor, impressing everyone he works with." },
+  { t: "Multi-disciplinary", icon: "cube", d: "Wears multiple hats, operating at the intersection of Strategy, Data, Operations, Product and Project." },
+  { t: "Highly analytical", icon: "chart", d: "Digests complex information, building clarity to drive analysis and help people make sense of it." },
+  { t: "Highly methodical", icon: "gear", d: "Creates structure to manage chaotic and ambiguous environments." },
+  { t: "Strong process improvement mindset", icon: "refresh", d: "Ideates and critically designs solutions to solve for inefficiencies." },
+  { t: "Tech savvy", icon: "code", d: "Picks up any new concepts quickly, and injects theory into practice." },
+  { t: "Capital Markets fluent", icon: "coin", d: "Deep subject matter expertise having worked in most segments of the trade lifecycle." },
 ];
 
 const ROLES = [
@@ -130,9 +130,10 @@ function Icon({ name, size = 18, color = INK, strokeWidth = 1.6 }) {
   );
 }
 
-// Placeholder path — Ned needs to supply a real photo at public/headshot-placeholder.jpg (the file doesn't
-// exist yet, so this intentionally 404s until then). Falls back to an "NY" initials circle if the image
-// fails to load, so the hero layout doesn't visibly break while the real photo is still missing.
+// SWAP-IN POINT: to add the real headshot, save the photo as public/headshot-placeholder.jpg (exact
+// filename, project-root "public" folder — Vite serves it at the site root, hence src="/headshot-placeholder.jpg"
+// below). That file does not exist yet, so the <img> intentionally 404s until Ned adds it; onError below
+// falls back to a circular "NY" initials avatar so the hero layout doesn't visibly break in the meantime.
 function Headshot({ size = 80 }) {
   const [imgFailed, setImgFailed] = useState(false);
   if (imgFailed) {
@@ -226,31 +227,32 @@ export default function Profile() {
 
       {/* NAV */}
       <div className="sticky top-0 z-20 backdrop-blur bg-[#F2F3EF]/90 border-b border-black/10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href={PROFILE_URL} className="font-display font-semibold tracking-tight">Ned Yuen</a>
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs px-3 py-1.5 rounded-full text-white" style={{ background: ACCENT }}>Career Profile</span>
             <a href={EXPLORER_URL} className="font-mono text-xs px-3 py-1.5 rounded-full border border-black/15 text-black/60 hover:border-black/30">Achievement Explorer</a>
             <a href={INTERVIEW_URL} className="font-mono text-xs px-3 py-1.5 rounded-full border border-black/15 text-black/60 hover:border-black/30">Interview Mode</a>
+            <div className="w-px h-5 bg-black/15 mx-2" />
             {/* Placeholder implementation: plain mailto link. Intended future behavior is a lightweight
                 purpose-selector modal ("Request my CV" / "Discuss an opportunity" / "Just want to connect"),
                 each prefilling a different message template — not built yet. */}
-            <a href="mailto:nedyuen@gmail.com" className="font-mono text-xs font-semibold px-4 py-2 rounded-full text-white ml-1 hover:opacity-90 transition-opacity" style={{ background: ACCENT }}>Contact Me</a>
+            <a href="mailto:nedyuen@gmail.com" className="font-mono text-xs font-semibold px-4 py-2 rounded-full text-white hover:opacity-90 transition-opacity" style={{ background: ACCENT }}>Contact Me</a>
           </div>
         </div>
       </div>
 
       {/* HERO / CAREER PROFILE */}
-      <header className="max-w-4xl mx-auto px-6 pt-14 pb-10">
+      <header className="max-w-6xl mx-auto px-6 pt-14 pb-10">
         <div className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: ACCENT }}>Professional Summary</div>
         <h1 className="font-display text-4xl md:text-5xl font-semibold leading-[1.05] tracking-tight max-w-2xl">
           Senior Strategy &amp; Transformation Lead, 13 years inside Capital Markets.
         </h1>
-        <div className="mt-6 flex flex-col sm:flex-row-reverse gap-6 sm:gap-8 items-start">
+        <div className="mt-6 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
           <Headshot size={160} />
-          <div className="space-y-3 max-w-xl flex-1 min-w-0">
+          <div className="space-y-3 max-w-xl min-w-0 text-left sm:order-first">
             {SUMMARY.map((s) => (
-              <p key={s} className="text-sm text-black/70 leading-relaxed">{s}</p>
+              <p key={s} className="text-sm text-black/70 leading-relaxed text-left">{s}</p>
             ))}
           </div>
         </div>
@@ -270,21 +272,22 @@ export default function Profile() {
           <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-2">Roles I'm looking for</div>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <a key={r} href={explorerLink({ preset: r })} className="font-mono text-xs px-3 py-1.5 rounded-full border hover:text-white transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
-                onMouseEnter={(e) => e.currentTarget.style.background = ACCENT} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{r}</a>
+              <a key={r} href={explorerLink({ preset: r })} className="font-mono text-xs px-3 py-1.5 rounded-full border transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = ACCENT; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ACCENT; }}>{r}</a>
             ))}
           </div>
         </div>
       </header>
 
       {/* REASONS TO HIRE */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Why Hire Me" title="Why should you hire me?" icon="target" />
         <div className="grid md:grid-cols-2 gap-x-10 gap-y-6">
           {REASONS.map((r) => (
             <div key={r.t} className="flex gap-3">
               <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0" style={{ background: `${ACCENT}12` }}>
-                <Icon name="target" size={15} color={ACCENT} />
+                <Icon name={r.icon} size={15} color={ACCENT} />
               </div>
               <div>
                 <div className="font-display font-semibold text-sm">{r.t}</div>
@@ -296,7 +299,7 @@ export default function Profile() {
       </section>
 
       {/* ABOUT ME */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Personality & Motivators" title="What am I like to work with?" icon="spark" />
         <div className="flex gap-2 mb-6">
           <button onClick={() => setAboutTab("personality")}
@@ -317,17 +320,19 @@ export default function Profile() {
         ) : (
           <>
             <p className="text-sm text-black/50 mb-5">Ned enjoys doing pieces of work that allow him to:</p>
-            <div className="grid md:grid-cols-2 gap-3">
+            <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2">
               {WORK_PREFS.map((w) => (
-                <div key={w} className="bg-white rounded-lg border border-black/10 p-3.5 text-sm text-black/70 leading-relaxed">{w}</div>
+                <li key={w} className="text-sm text-black/70 leading-relaxed flex gap-2">
+                  <span style={{ color: ACCENT }} className="shrink-0">—</span>{w}
+                </li>
               ))}
-            </div>
+            </ul>
           </>
         )}
       </section>
 
       {/* EXPERTISE */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Functional & Technical Depth" title="What are my areas of expertise?" icon="cube" />
         <p className="text-sm text-black/50 mb-6 max-w-xl">
           On paper, a Transformation Lead. In practice, working at the intersection of Strategy, Operations, Product, Data, Programming, Change, Finance and Management.
@@ -367,15 +372,16 @@ export default function Profile() {
         <div className="font-mono text-[10px] tracking-widest text-black/40 uppercase mb-3">Technical toolkit</div>
         <div className="flex flex-wrap gap-1.5">
           {TECHNICAL.map((t) => (
-            <a key={t} href={explorerLink({ q: t })} className="text-xs font-mono px-2.5 py-1 rounded-md border hover:text-white transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
-              onMouseEnter={(e) => e.currentTarget.style.background = ACCENT} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>{t}</a>
+            <a key={t} href={explorerLink({ q: t })} className="text-xs font-mono px-2.5 py-1 rounded-md border transition-colors" style={{ borderColor: ACCENT, color: ACCENT }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = ACCENT; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = ACCENT; }}>{t}</a>
           ))}
         </div>
         <p className="text-[11px] text-black/40 mt-2">Click a skill to see the achievements that used it →</p>
       </section>
 
       {/* CAREER JOURNEY */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Work History" title="What is my professional journey?" icon="chart" />
         <p className="text-[11px] text-black/40 mb-2">Click a company or role below to explore its evidence →</p>
 
@@ -400,7 +406,7 @@ export default function Profile() {
       </section>
 
       {/* EDUCATION & QUALIFICATIONS */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Education & Certifications" title="What are my qualifications?" icon="cap" />
         <div className="grid md:grid-cols-2 gap-10">
           <div>
@@ -437,7 +443,7 @@ export default function Profile() {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
+      <section className="max-w-6xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Testimonials" title="What do people say about me?" icon="quote" />
         <div className="grid md:grid-cols-2 gap-4">
           {TESTIMONIALS.filter((t) => testimonialText[t.title]).map((t) => (
@@ -450,11 +456,11 @@ export default function Profile() {
       </section>
 
       {/* CTA */}
-      <footer className="max-w-4xl mx-auto px-6 py-16 border-t border-black/10">
+      <footer className="max-w-6xl mx-auto px-6 py-16 border-t border-black/10">
         <div className="grid grid-cols-3 gap-3 mb-10">
           <a href={explorerLink({ tier: "highlighted" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
-            <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>◆ 4</div>
-            <div className="text-[11px] font-mono text-black/40 mt-1">Signature achievements</div>
+            <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>4</div>
+            <div className="text-[11px] font-mono text-black/40 mt-1">Highlighted achievements</div>
           </a>
           <a href={explorerLink({ type: "award" })} className="bg-white rounded-lg border border-black/10 p-4 text-center hover:border-black/25 transition-colors">
             <div className="font-display text-2xl font-semibold" style={{ color: ACCENT }}>6</div>
@@ -478,7 +484,7 @@ export default function Profile() {
         </div>
         <div className="flex items-center gap-5 mt-8 pt-8 border-t border-black/10">
           <a href="mailto:nedyuen@gmail.com" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
-            <Icon name="mail" size={14} color="currentColor" />nedyuen@gmail.com
+            <Icon name="mail" size={14} color="currentColor" />Email
           </a>
           {/* Placeholder URL — Ned needs to fill in his real LinkedIn profile link. */}
           <a href="https://linkedin.com/in/PLACEHOLDER" className="flex items-center gap-1.5 text-xs font-mono text-black/50 hover:text-black transition-colors">
