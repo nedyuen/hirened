@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');`;
 const INK = "#1C2230";
@@ -76,54 +77,16 @@ const CAREER_HIGHLIGHTS = {
   Management: [{ type: "achievement", ref: "MBA sponsorship, Senior Leader Apprenticeship" }],
 };
 
-// Local copy of only the 8 refs above (bullet/goal text), word-for-word identical to Explorer.jsx's
-// PROJECTS/ROLE_EVIDENCE — a minimal local copy, not the full dataset (same pattern used elsewhere on
-// this page, e.g. TIMELINE below, rather than importing across page files). If Explorer's wording
-// changes, update the source there first, then copy it here.
-const HIGHLIGHT_TEXT = {
-  "Prime Transformation": "Driving the business transformation agenda for the Prime business.",
-  "Trade reporting control framework": "Designed and implemented a front-to-back reconciliation and control framework for trade reporting.",
-  "One-stop-shop trade processing platform": "Delivered a one-stop-shop trade processing platform, displacing 37 legacy systems across desks.",
-  "Digital & Platform Services Excellence Award": "Partnered with the ML team to deploy models supporting automated trade resolution, earning JPM's quarterly Digital & Platform Services Excellence Award.",
-  "Automated Bloomberg data feeds": "Automated vendor data feeds, removing a $50k/yr subscription cost.",
-  "Scrum, DevOps & ML analytics adoption": "Championed agile and ML-assisted QA tooling adoption, lifting pass rates by 35%.",
-  "Reactivated $1M in dormant client revenue": "Reactivated $1M in dormant client revenue by rebuilding relationships with high-value hedge fund clients.",
-  "MBA sponsorship, Senior Leader Apprenticeship": "Selected for full MBA sponsorship on JPM's Senior Leader Apprenticeship program.",
-};
-
-// Hand-picked reviews to surface on the homepage. Reference existing review evidence by title/source —
-// do not write new quote text here. Edit which reviews appear by changing this list, not by adding new content.
+// Hand-picked reviews to surface on the homepage — just the reference (title), not the quote text.
+// Both quote and source are resolved live from Supabase's evidence table (see the fetch effect below),
+// so there's one source of truth instead of a hand-copied local string. Edit which reviews appear by
+// changing this list. Title-matching (not a stable ID) remains a known limitation — see CLAUDE.md.
 const TESTIMONIALS = [
-  { title: "Client feedback", source: "VP, Morgan Stanley Operations" },
-  { title: "Manager feedback", source: "Managing Director, JPM Markets Operations" },
+  { title: "Client feedback" },
+  { title: "Manager feedback" },
 ];
-
-// Local copy of only the quote text for the testimonials above, word-for-word identical to Explorer.jsx's
-// PROJECTS/ROLE_EVIDENCE review items — same minimal-local-copy pattern as HIGHLIGHT_TEXT, not the full dataset.
-// Both source reviews are currently sample: true in Explorer — placeholder content like ~13 other evidence
-// items already are, not a blocker to showing this section; swap for real reviews during the content pass.
-const TESTIMONIAL_TEXT = {
-  "Client feedback": "The control framework Ned designed is still how we catch breaks before they become reportable issues.",
-  "Manager feedback": "Ned brings structure to the messiest problems on the desk — he's the person I want in the room when we don't yet know the answer.",
-};
 
 const TECHNICAL = ["Python", "SQL", "JavaScript", "HTML", "Excel / VBA", "Alteryx", "Power Automate", "Power Apps", "Tableau", "Claude Code", "Google AI Studio", "NLTK", "Scikit-Learn", "API Integration", "IBM Cloud", "Figma", "JIRA"];
-
-// ASSUMPTION — Accenture split: see the matching, more detailed comment in Explorer.jsx's ROLES array.
-// Ned's job title didn't change between secondments, only the client — hence the " — <client> secondment"
-// suffix rather than a distinct title. Date boundary (2017–2019 / 2019–2021) is inferred from real evidence
-// years (Morgan Stanley project dated 2018, Goldman Sachs projects dated 2019); confirm/correct with Ned.
-// `role` strings below must match Explorer.jsx's ROLES[].title exactly — they're used as the `jobRole`
-// param when linking into the Explorer (see the timeline rendering below). Where the display text carries
-// more detail than the stint title (e.g. "Sales Associate, Front Office" vs. Explorer's "Sales Associate"),
-// an explicit `jobRole` override is set so the link still matches; entries without one link using `role` as-is.
-const TIMELINE = [
-  { org: "UBS", role: "Operations Analyst", years: "2012–2016", d: "Rates MO Risk & Trade Control, Desk Services, OTC Confirmations, ETD Regulatory Reporting." },
-  { org: "UBS", role: "Sales Associate, Front Office", jobRole: "Sales Associate", years: "2016–2017", d: "Flow Rates hedge fund desk and LDI desk — pricing, execution and client rebalancing." },
-  { org: "Accenture", role: "Consulting Manager — Morgan Stanley secondment", years: "2017–2019", d: "Seconded as Business Analyst at Morgan Stanley (Trade Reporting Controls)." },
-  { org: "Accenture", role: "Consulting Manager — Goldman Sachs secondment", years: "2019–2021", d: "Seconded as Project Manager at Goldman Sachs (Global Markets Equities)." },
-  { org: "JP Morgan", role: "Transformation Vice President", years: "2021–Present", d: "Securities Ops Transformation → Markets Ops Platform Transformation → Markets Regulatory Control Transformation." },
-];
 
 const EDUCATION = [
   { i: "MBA, Strategic Leadership & Management", s: "University of Exeter — via JP Morgan Senior Leader Apprenticeship (in progress)" },
@@ -208,6 +171,48 @@ function SectionHeader({ eyebrow, title, icon }) {
 
 export default function Profile() {
   const [aboutTab, setAboutTab] = useState("personality");
+
+  // Resolves CAREER_HIGHLIGHTS/TESTIMONIALS references and the Career Journey timeline live from
+  // Supabase, replacing the local hand-copied HIGHLIGHT_TEXT/TESTIMONIAL_TEXT/TIMELINE text that used
+  // to duplicate Explorer's data — one source of truth now, though matching by title/name string
+  // (not a stable ID) remains a known limitation, same as before.
+  const [highlightText, setHighlightText] = useState({});
+  const [testimonialText, setTestimonialText] = useState({});
+  const [timeline, setTimeline] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const highlightRefs = Object.values(CAREER_HIGHLIGHTS).flat();
+      const achievementRefs = highlightRefs.filter((h) => h.type === "achievement").map((h) => h.ref);
+      const projectRefs = highlightRefs.filter((h) => h.type === "project").map((h) => h.ref);
+      const testimonialTitles = TESTIMONIALS.map((t) => t.title);
+
+      const [{ data: achievementRows }, { data: projectRows }, { data: testimonialRows }, { data: roleRows }] = await Promise.all([
+        supabase.from("evidence").select("title, bullet").in("title", achievementRefs),
+        supabase.from("projects").select("name, goal").in("name", projectRefs),
+        supabase.from("evidence").select("title, quote, source").in("title", testimonialTitles),
+        supabase.from("roles").select("job_title, description, start_date, end_date, companies(name)").order("start_date"),
+      ]);
+      if (cancelled) return;
+
+      const hText = {};
+      achievementRows?.forEach((r) => { hText[r.title] = r.bullet; });
+      projectRows?.forEach((r) => { hText[r.name] = r.goal; });
+      setHighlightText(hText);
+
+      const tText = {};
+      testimonialRows?.forEach((r) => { tText[r.title] = { quote: r.quote, source: r.source }; });
+      setTestimonialText(tText);
+
+      setTimeline([...(roleRows || [])].reverse().map((r) => ({
+        org: r.companies.name,
+        role: r.job_title,
+        years: `${r.start_date.slice(0, 4)}–${r.end_date ? r.end_date.slice(0, 4) : "Present"}`,
+        d: r.description,
+      })));
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F2F3EF] text-ink font-body">
@@ -344,10 +349,12 @@ export default function Profile() {
                 {highlights.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-black/10">
                     {highlights.map((h, i) => (
-                      <p key={i} className="text-[11px] text-black/50 leading-relaxed line-clamp-2">
-                        <span className="font-mono text-[9px] uppercase tracking-wide text-black/35 mr-1">Example —</span>
-                        {HIGHLIGHT_TEXT[h.ref]}
-                      </p>
+                      highlightText[h.ref] && (
+                        <p key={i} className="text-[11px] text-black/50 leading-relaxed line-clamp-2">
+                          <span className="font-mono text-[9px] uppercase tracking-wide text-black/35 mr-1">Example —</span>
+                          {highlightText[h.ref]}
+                        </p>
+                      )
                     ))}
                     <div className="text-[10px] font-mono mt-1.5" style={{ color: ACCENT }}>See all {f.cat} achievements →</div>
                   </div>
@@ -373,12 +380,13 @@ export default function Profile() {
         <p className="text-[11px] text-black/40 mb-2">Click a company or role below to explore its evidence →</p>
 
         <div>
-          {[...TIMELINE].reverse().map((t, i) => (
+          {timeline.length === 0 && <p className="text-sm text-black/40 font-mono">Loading timeline…</p>}
+          {timeline.map((t, i) => (
             <div key={i} className="flex gap-6 py-5 border-b border-black/10 last:border-0">
               <div className="font-mono text-xs text-black/40 w-24 shrink-0 pt-1">{t.years}</div>
               <div>
                 <div className="font-display font-semibold text-sm">
-                  <a href={explorerLink({ company: t.org, jobRole: t.jobRole || t.role, groupBy: "role" })}
+                  <a href={explorerLink({ company: t.org, jobRole: t.role, groupBy: "role" })}
                     className="hover:underline underline-offset-2" style={{ color: INK }}>{t.role}</a>
                   {" · "}
                   <a href={explorerLink({ company: t.org, groupBy: "company" })}
@@ -432,10 +440,10 @@ export default function Profile() {
       <section className="max-w-4xl mx-auto px-6 py-14 border-t border-black/10">
         <SectionHeader eyebrow="Testimonials" title="What do people say about me?" icon="quote" />
         <div className="grid md:grid-cols-2 gap-4">
-          {TESTIMONIALS.map((t) => (
+          {TESTIMONIALS.filter((t) => testimonialText[t.title]).map((t) => (
             <div key={t.title} className="bg-white rounded-lg border border-black/10 border-l-4 p-4" style={{ borderLeftColor: ACCENT }}>
-              <p className="text-sm text-black/70 italic leading-relaxed">"{TESTIMONIAL_TEXT[t.title]}"</p>
-              <div className="font-mono text-[11px] text-black/40 mt-3">— {t.source}</div>
+              <p className="text-sm text-black/70 italic leading-relaxed">"{testimonialText[t.title].quote}"</p>
+              <div className="font-mono text-[11px] text-black/40 mt-3">— {testimonialText[t.title].source}</div>
             </div>
           ))}
         </div>

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(npm uninstall *)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(node scripts/.test-extract.mjs)",
+      "Bash(rm scripts/.test-extract.mjs)",
+      "Bash(ls .env.local)",
+      "Bash(git check-ignore *)",
+      "Bash(node --env-file=.env.local scripts/seed.js)",
+      "Bash(node --env-file=.env.local scripts/.cleanup-partial.mjs)",
+      "Bash(rm scripts/.cleanup-partial.mjs)",
+      "Bash(node --env-file=.env.local scripts/.verify-seed.mjs)",
+      "Bash(node --env-file=.env.local scripts/.verify-seed2.mjs)",
+      "Bash(node --env-file=.env.local scripts/backfill-project-years.mjs)",
+      "Bash(node .scratch-verify1.mjs)"
+    ]
+  }
+}

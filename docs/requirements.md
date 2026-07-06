@@ -10,7 +10,7 @@ A personal site to sell yourself to future employers, built as **three pages** s
 
 Profile and Explorer are deliberately separate because they do different jobs: Profile answers "who is this person, in 30 seconds"; Explorer answers "prove it" for someone who wants to dig. A data table can't carry personality; a narrative page can't hold 50+ tagged bullets without becoming unreadable. Don't merge them.
 
-**Single lens throughout — no tech/banking audience toggle.** An early draft explored this; it was explicitly removed. Content is presented once, not reframed per audience.
+**Single lens throughout — no tech/banking audience toggle.** An early draft explored this; it was explicitly removed. Content is presented once, not reframed per audience. (Explorer.jsx's UI hadn't fully caught up to this decision until the Supabase-wiring pass — a leftover `lens`/`?audience=` filtering mechanism was removed then, once `evidence.audience_tags` also stopped existing in the schema.)
 
 All three pages share one consistent nav bar (Career Profile / Achievement Explorer / Interview Mode, same order, current page filled in teal #1F5C56, others outlined) and one design system (section 5).
 
@@ -53,9 +53,9 @@ The Review definition was deliberately broadened during the build: it doesn't re
 
 Considered and rejected: a broader "proof of success" category spanning achievement/award/review. Tested against real examples (a contract renewed three times; being personally requested for a rescue) — both fit cleanly into existing achievement/review definitions once those definitions were applied precisely. A fourth type would have blurred a distinction that's doing real visual/structural work.
 
-**Evidence has a level, independent of type:** company / role / project. A firm-wide award must never be forced under one project just because it needs a parent. related_project_id (nullable) lets evidence reference a project without being owned by it.
+**Evidence has a level, independent of type:** company / role / project. A firm-wide award must never be forced under one project just because it needs a parent. Originally, a nullable `related_project_id` let evidence reference a project without being owned by it (e.g. a role-level award recognizing work spanning a project without being earned solely for it). **This field no longer exists in the live schema** (dropped in a post-seeding simplification, done outside a Claude Code session — see requirements.md §7/§9 and CLAUDE.md). The one evidence row that used it (Digital & Platform Services Excellence Award) is now directly `project_id`-owned by Data Science Solutions with `level: 'project'` instead — the reference-without-ownership pattern this paragraph describes isn't representable in the schema as it currently stands. Its `detail` text used to still describe the old role-level framing, inconsistent with its `level: 'project'` assignment — fixed with a one-row content update directly in Supabase (see §9).
 
-**Responsibility and Evidence are siblings under Project, not parent-child** — the relationship is many-to-many (one responsibility can produce multiple achievements; one achievement can stem from multiple responsibilities), and a mandatory parent would block the "log now, structure later" workflow used throughout. evidence.related_responsibility_ids is an optional, nullable, multi-valued link. Designed, schema'd, not yet rendered in the UI.
+**Responsibility and Evidence were designed as siblings under Project, not parent-child** — the relationship was many-to-many (one responsibility can produce multiple achievements; one achievement can stem from multiple responsibilities), and a mandatory parent would have blocked the "log now, structure later" workflow used throughout. **The `responsibilities` table and `evidence.related_responsibility_ids` no longer exist in the live schema** — dropped in the same post-seeding simplification, since no page ever rendered this and no source data existed to seed it from. This section is now historical design rationale, not a description of live structure.
 
 **Tags ("Expertise") are multi-valued, from a fixed 8-value enum** (Strategy, Operations, Product, Data, Programming, Change, Finance, Management) — same taxonomy driving the Profile's Functional Expertise section. Grouping by Expertise must not duplicate full cards across every matching group: each item gets one full card under its first-listed ("primary") tag, and a compact one-line cross-reference stub ("see under X") everywhere else it also applies. Tag order matters — list the most defining discipline first.
 
@@ -68,9 +68,9 @@ An earlier version showed a short title, then an auto-truncated 100-character sl
 
 **highlighted — a single boolean, deliberately rare (currently 4 items), not a rating scale.** Went through two rejected iterations first: a literal 5-star system (rejected — self-assessed ratings drift upward, nothing wants to call itself "2 stars," so a star scale stops discriminating), then a 3-tier Signature/Notable split (simplified further — more granularity than the actual decision needed, which is just "is this one of the few things I most want seen"). Rendered as a dark navy (#1E3A5F) badge, top-right of the card — a color distinct from every company accent and every type color.
 
-**is_sample** marks fabricated/placeholder content. Not shown in the UI (an amber "SAMPLE" badge and a page-level warning banner were built, then explicitly removed once real-content review became the plan) — the flag stays in the data for a possible future review pass. ~13 evidence items are still sample content.
+**is_sample** originally marked fabricated/placeholder content, never shown in the UI (an amber "SAMPLE" badge and a page-level warning banner were built, then explicitly removed once real-content review became the plan). **This column no longer exists in the live schema** (dropped in the post-seeding simplification — Ned is reviewing all content directly rather than tracking a sample flag going forward). ~13 evidence items are still placeholder content in substance, just no longer flagged as such in the data.
 
-### Schema (as actually applied to the live Supabase project — see section 7)
+### Schema — as originally designed (see below for what's actually live)
 
 ```sql
 create table profiles (
@@ -158,6 +158,79 @@ alter table companies enable row level security;
 alter table roles enable row level security;
 alter table projects enable row level security;
 alter table responsibilities enable row level security;
+alter table evidence enable row level security;
+-- (public-read / owner-write policy pair repeated per table, keyed on owner_id)
+```
+
+### Schema — as actually live today (post-simplification, see section 7)
+
+`audiences` and `responsibilities` tables dropped entirely. `evidence` lost `related_project_id`, `related_responsibility_ids`, `year`, `is_sample`, `audience_tags`. `projects` gained a `year` column (one year per project, not per-evidence). Net: **5 tables, not 7.**
+
+```sql
+create table profiles (
+  id uuid primary key references auth.users(id) default auth.uid(),
+  slug text unique not null,
+  full_name text not null,
+  tagline text,
+  summary text,
+  headshot_url text,
+  created_at timestamptz default now()
+);
+
+create table companies (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) not null,
+  name text not null,
+  blurb text,
+  sort_order int default 0
+);
+
+create table roles (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) not null,
+  company_id uuid references companies(id) not null,
+  job_title text not null,
+  description text,
+  start_date date,
+  end_date date
+  -- no sort_order on this table, unlike companies/projects/evidence
+);
+
+create table projects (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) not null,
+  role_id uuid references roles(id) not null,
+  client_name text,
+  functional_role text,
+  name text not null,
+  goal text,
+  year int,
+  sort_order int default 0
+);
+
+create table evidence (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) not null,
+  type text not null check (type in ('achievement', 'award', 'review')),
+  level text not null check (level in ('company', 'role', 'project')),
+  role_id uuid references roles(id),
+  project_id uuid references projects(id),
+  client_name text,
+  title text not null,
+  bullet text,
+  metric text,
+  quote text,
+  source text,
+  detail text,
+  highlighted boolean default false,
+  category_tags text[] default '{}',
+  sort_order int default 0
+);
+
+alter table profiles enable row level security;
+alter table companies enable row level security;
+alter table roles enable row level security;
+alter table projects enable row level security;
 alter table evidence enable row level security;
 -- (public-read / owner-write policy pair repeated per table, keyed on owner_id)
 ```
@@ -338,10 +411,10 @@ React (Vite) + Tailwind + React Router. Local project scaffold exists (package.j
 
 CLAUDE.md exists at the project root, auto-loaded by Claude Code every session, importing this file plus a short list of non-negotiable constraints (company/client modeling, AND-of-words search, RLS/service-key seeding). Keep both docs updated as decisions are made.
 
-Current gaps: every page still reads from hardcoded JS consts, not Supabase. Cross-page nav still uses plain anchor tags rather than React Router's Link component.
+`src/lib/supabase.js` exports one shared client (`createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY)`), anon-key/RLS-scoped for reads. **Explorer.jsx and Profile.jsx now query Supabase live** instead of reading hardcoded consts — see CLAUDE.md's Current State for the transform-layer approach (Explorer.jsx's `fetchExplorerData()` reassembles Supabase's relational rows into the same flat shape the filtering/grouping/search UI already expected, so none of that logic had to change) and for what replaced the old `CAREER_HIGHLIGHTS`/`TESTIMONIALS`/timeline local-copy patterns. Only Interview.jsx still has no backend and still doesn't need one (intentional placeholder). Cross-page nav still uses plain anchor tags rather than React Router's Link component — still a separate, deferred item.
 
-### Backend — Supabase, provisioned and live
-The "Hire Ned" Supabase project had old, unrelated tables (a booking-app prototype) confirmed unused and dropped. The schema above was applied via migration. 7 tables live, RLS enabled, zero security advisories. Tables are currently empty. @supabase/supabase-js is in package.json, unused so far. Seeding requires the service_role key (server-side/script-only, never committed).
+### Backend — Supabase, provisioned, live, seeded, and now queried by the frontend
+The "Hire Ned" Supabase project had old, unrelated tables (a booking-app prototype) confirmed unused and dropped. The schema was applied via migration, then **simplified after seeding** (see §2's "as actually live today" schema block) — 5 tables now, not 7; `responsibilities` and `audiences` dropped entirely, along with several `evidence` columns. RLS enabled, zero security advisories. Seeded with real data (1 profile, 3 companies, 5 roles, 17 projects, 29 evidence rows) via `scripts/seed.js` — **historical now, not re-runnable as-is**, since it extracted `COMPANIES`/`ROLES`/`PROJECTS`/`ROLE_EVIDENCE` directly out of Explorer.jsx's source text, and Explorer.jsx no longer contains that hardcoded data at all following the live-query wiring. `projects.year` (added post-seeding to replace per-evidence `year`) was backfilled once via `scripts/backfill-project-years.mjs`, same now-historical caveat. Both scripts' own header comments explain why and what to do if a from-scratch reseed is ever needed. Seeding required the service_role key, read from `.env.local` (gitignored, never committed, never `VITE_`-prefixed) — the frontend itself only ever uses the anon key.
 
 ### Deployment
 Static Vite build to Vercel, with the SPA rewrite noted above.
@@ -357,7 +430,9 @@ Static Vite build to Vercel, with the SPA rewrite noted above.
 
 Companies/Roles: UBS — Operations Analyst (2012-16), Sales Associate (2016-17). Accenture — Consulting Manager (2017-21), **now split into two job-stint entries** rather than one combined stint: "Consulting Manager — Morgan Stanley secondment" (2017-19) and "Consulting Manager — Goldman Sachs secondment" (2019-21). The job title itself didn't change between secondments (unlike UBS's genuine Operations Analyst → Sales Associate title change) — only the client did — so the two stints share one title, differentiated by a client-secondment suffix rather than a real title change. JP Morgan — Transformation Vice President (2021-present), three phases.
 
-**The Accenture split's date boundary is inferred, not confirmed** — Ned should verify. It's derived from real evidence dates: the Morgan Stanley project (Control Framework) is dated 2018; the three Goldman Sachs projects (Corporate Actions, Matching/Shaping/Allocation, Booking and Control) are all dated 2019. The chosen boundary (~Jan 2019) is the only one, given `resolveRole()`'s year-only (not date-only, and not client-aware) matching logic, that correctly resolves all four of these real, verified, `sample: false` achievement/review items to their correct secondment. One known side effect: `resolveRole()` has no access to an evidence item's own client field once it's translated to employer "Accenture" for stint lookup — it disambiguates by year alone. This mislabels one real item, "Star of the Month & Client Hero" (`company: "Goldman Sachs"`, year 2018), which resolves to the Morgan Stanley stint (its year falls only in that stint's range) despite being Goldman-Sachs-attributed. Flagged in code comments in both `Explorer.jsx` (ROLES array) and `Profile.jsx` (TIMELINE array) — not fixed, since a real fix would mean changing `resolveRole()`'s signature to accept the item's actual client, which was out of scope for the change that surfaced this.
+**The Accenture split's date boundary is inferred, not confirmed** — Ned should verify. It's derived from real evidence dates: the Morgan Stanley project (Control Framework) is dated 2018; the three Goldman Sachs projects (Corporate Actions, Matching/Shaping/Allocation, Booking and Control) are all dated 2019.
+
+**`resolveRole()`'s client-vs-year mislabeling bug is fixed, and the function is now deleted entirely.** It previously disambiguated Accenture-era items by year alone, since it had no access to an evidence item's own client field once translated to employer "Accenture" — this mislabeled "Star of the Month & Client Hero" (`company: "Goldman Sachs"`, year 2018) under the Morgan Stanley stint. Fixed at seed time (each Accenture stint carried a `client` field, matched exactly before any year-range fallback) and verified: "Star of the Month & Client Hero" correctly got the Goldman Sachs secondment's `role_id`. Now that every `evidence` row has that `role_id` set correctly as a real foreign key, `resolveRole()` has no job left to do against live data — it's been removed from Explorer.jsx (a version of it still exists, now-historical, inside `scripts/seed.js`, which is no longer re-runnable — see §7).
 
 Projects (17 real): 3 under Goldman Sachs, 1 under Morgan Stanley, 13 under JP Morgan. Only 3 had real verified achievement write-ups (Corporate Actions, Control Framework, Data Science Solutions — all three flagged highlighted). The remaining 14 are placeholder/sample content — the single largest remaining task.
 
@@ -369,14 +444,16 @@ Reviews: currently 2, both still sample/placeholder content, surfaced in the Pro
 
 1. Content backlog — ~14 placeholder achievement write-ups, 2 placeholder reviews, need real content.
 2. Interview Mode has no backend.
-3. Supabase tables are empty; no page queries Supabase yet.
+3. ~~Supabase tables are seeded but no page queries Supabase yet~~ — Explorer.jsx and Profile.jsx now query it live (see §7); only Interview Mode still has no backend (item 2).
 4. Anchor-tag navigation should become React Router's Link component.
-5. Footer stat strip on Profile is hardcoded — should compute live off evidence data once wired.
+5. Footer stat strip on Profile is still hardcoded (`◆ 4` / `6` / `2`) — should compute live off evidence data now that Profile queries Supabase for other content; not done as part of the live-wiring pass since the task scope was read-only wiring, not new derived-count logic.
 6. A couple of target-role presets return zero results against real data.
-7. Responsibility is schema'd but not yet rendered anywhere in the UI.
-8. CAREER_HIGHLIGHTS/TESTIMONIALS reference by title/name string matching, not stable IDs.
+7. ~~Responsibility is schema'd but not yet rendered anywhere in the UI~~ — the `responsibilities` table (and `evidence.related_responsibility_ids`) were dropped from the schema entirely in the post-seeding simplification (see §7); this is no longer a "not yet built" gap, it's off the roadmap unless reintroduced.
+8. CAREER_HIGHLIGHTS/TESTIMONIALS reference by title/name string matching, not stable IDs — still true now that both resolve live from Supabase (queries are `.eq("title", ref)`/`.in("title", refs)`, same fragility as the old local-copy lookups, just against the database instead of a hardcoded object).
 9. Reason-to-hire linking — deferred by design, see section 6.
 10. Accenture Morgan Stanley/Goldman Sachs secondment date boundary is inferred — Ned should confirm/correct the real dates (see section 8).
-11. `resolveRole()`'s year-only matching mislabels one real evidence item ("Star of the Month & Client Hero") under the wrong secondment — see section 8. Would need `resolveRole()` to accept the item's actual client to fix properly.
+11. ~~`resolveRole()`'s year-only matching mislabels "Star of the Month & Client Hero"~~ — fixed at seed time, and the function is now deleted entirely (see section 8/section 7) — not just fixed, no longer needed.
 12. Contact Me button is a placeholder `mailto:` link — intended future behavior is a purpose-selector modal (Request CV / Discuss an opportunity / Just want to connect), not built yet.
 13. LinkedIn footer link is a placeholder URL (`linkedin.com/in/PLACEHOLDER`) — Ned needs to fill in the real profile URL.
+14. ~~Digital & Platform Services Excellence Award's `detail` text read inconsistently with its `level: 'project'` schema assignment~~ — fixed with a one-row `detail` update directly in Supabase (see §2), removing the stale "logged at role-level, not this project alone" framing without just restating `bullet`.
+15. **New** — `scripts/seed.js` and `scripts/backfill-project-years.mjs` are no longer re-runnable as-is: both extract data by parsing hardcoded consts out of Explorer.jsx's source text, which no longer contains that data following the live-query wiring (see §7). Kept as historical/audit-trail records. A from-scratch reseed would need either a temporarily-restored hardcoded-data version of Explorer.jsx, or reworking the scripts to read from a static snapshot instead.
