@@ -205,12 +205,32 @@ export default function Profile() {
       testimonialRows?.forEach((r) => { tText[r.title] = { quote: r.quote, source: r.source }; });
       setTestimonialText(tText);
 
-      setTimeline([...(roleRows || [])].reverse().map((r) => ({
+      const items = [...(roleRows || [])].reverse().map((r) => ({
         org: r.companies.name,
         role: r.job_title,
+        start: r.start_date,
+        end: r.end_date || "9999-12-31", // treat the ongoing role as open-ended for containment comparisons only
         years: `${r.start_date.slice(0, 4)}–${r.end_date ? r.end_date.slice(0, 4) : "Present"}`,
         d: r.description,
-      })));
+      }));
+      // Nest a role under another same-company role whose date range strictly contains it (e.g. a
+      // client secondment's dates fall inside the general tenure's dates) — inferred from dates, not
+      // job_title wording, since `roles` has no self-referencing parent column and title text is free
+      // to be reworded (a prefix-matching version of this broke exactly that way once already).
+      const topLevel = [];
+      items.forEach((item) => {
+        const containers = items.filter((p) =>
+          p !== item && p.org === item.org && p.start <= item.start && p.end >= item.end && (p.start < item.start || p.end > item.end)
+        );
+        const parent = containers.sort((a, b) => (a.end < b.end ? -1 : a.end > b.end ? 1 : 0))[0];
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(item);
+        } else {
+          topLevel.push(item);
+        }
+      });
+      setTimeline(topLevel);
     })();
     return () => { cancelled = true; };
   }, []);
@@ -409,6 +429,21 @@ export default function Profile() {
                     className="hover:underline underline-offset-2" style={{ color: ACCENTS[t.org] }}>{t.org}</a>
                 </div>
                 <div className="text-sm text-black/60 mt-1 leading-relaxed">{t.d}</div>
+
+                {t.children && t.children.length > 0 && (
+                  <div className="mt-3 pl-4 space-y-3 border-l-2" style={{ borderColor: `${ACCENT}25` }}>
+                    {t.children.map((c, ci) => (
+                      <div key={ci}>
+                        <div className="font-mono text-[11px] text-black/40">{c.years}</div>
+                        <div className="font-display font-semibold text-xs">
+                          <a href={explorerLink({ company: c.org, jobRole: c.role, groupBy: "role" })}
+                            className="hover:underline underline-offset-2" style={{ color: INK }}>{c.role}</a>
+                        </div>
+                        <div className="text-xs text-black/50 mt-0.5 leading-relaxed">{c.d}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
