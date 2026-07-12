@@ -37,6 +37,8 @@ Company (employer)
 
 **Role (job stint) is not the same as Delivery role (project-specific hat).** You can hold the title "Transformation VP" while acting as a de facto Product Manager on one project and a Business Analyst on another. Two separate fields: roles.job_title (company-level) and projects.functional_role (project-level). Never merge them — that erases signal about range. In the UI, "Delivery role" is explicitly labeled "distinct from job title" so this is never re-confused.
 
+**`roles.team` vs. `roles.description` — structural vs. narrative, same two-facet split as elsewhere in this schema.** `description` is the narrative blurb (what the role actually involved, in prose) — shown in the Explorer's role-group header, already correct and untouched by this split. `team` is structural/org information (which teams/functions the role sat across, e.g. "Rates Middle Office (Risk Control, Trade Control, Desk Services); Derivatives Operations (OTC Confirmations, ETD Regulatory Reporting)") — shown on the Profile's Career Journey timeline instead of `description`, since a compact org-structure line reads better in a scannable timeline than a full narrative paragraph would. `team` is nullable and starts empty for every role — Ned populates it directly in Supabase; the Profile timeline omits the line entirely for any role where it's still null rather than rendering an awkward blank line.
+
 **Description vs. Evidence — the "delete the subject" test.** Remove "I"/"this" from a candidate bullet:
 - Survives as a standalone fact -> Description, a single-valued property (companies.blurb, roles.description, projects.goal). Exactly one per entity, never filterable, never a card.
 - Collapses without the person specifically -> Evidence, a child record. Zero-to-many, independently taggable/filterable/countable.
@@ -164,7 +166,7 @@ alter table evidence enable row level security;
 
 ### Schema — as actually live today (post-simplification, see section 7)
 
-`audiences` and `responsibilities` tables dropped entirely. `evidence` lost `related_project_id`, `related_responsibility_ids`, `year`, `is_sample`, `audience_tags`. `projects` gained a `year` column (one year per project, not per-evidence). Net: **5 tables, not 7.**
+`audiences` and `responsibilities` tables dropped entirely. `evidence` lost `related_project_id`, `related_responsibility_ids`, `year`, `is_sample`, `audience_tags`. `projects` gained a `year` column (one year per project, not per-evidence). `roles` gained a `team` column (structural, nullable — see the `roles.team` vs. `roles.description` note above). Net: **5 tables, not 7.**
 
 ```sql
 create table profiles (
@@ -191,6 +193,7 @@ create table roles (
   company_id uuid references companies(id) not null,
   job_title text not null,
   description text,
+  team text,
   start_date date,
   end_date date
   -- no sort_order on this table, unlike companies/projects/evidence
@@ -462,3 +465,5 @@ Reviews: currently 2, both still sample/placeholder content, surfaced in the Pro
 14. ~~Digital & Platform Services Excellence Award's `detail` text read inconsistently with its `level: 'project'` schema assignment~~ — fixed with a one-row `detail` update directly in Supabase (see §2), removing the stale "logged at role-level, not this project alone" framing without just restating `bullet`.
 15. `scripts/seed.js` and `scripts/backfill-project-years.mjs` are no longer re-runnable as-is: both extract data by parsing hardcoded consts out of Explorer.jsx's source text, which no longer contains that data following the live-query wiring (see §7). Kept as historical/audit-trail records. A from-scratch reseed would need either a temporarily-restored hardcoded-data version of Explorer.jsx, or reworking the scripts to read from a static snapshot instead.
 16. ~~Third Accenture role nesting inferred from `job_title` naming convention~~ — that approach broke the first time secondment titles were reworded in Supabase (silently reverted to a flat list, no error). Fixed by re-deriving parent/child from date-range containment instead (see §8) — no `parent_id` column exists on `roles`, so this is still inferred client-side, but from dates now, not text. Still worth knowing: if a future role is added whose date range happens to fully contain another same-company role's range, it will auto-nest under it, intentionally or not.
+17. **New** — `roles.team` is currently null for all 6 roles. Added as a schema-only change (see §2); Ned still needs to populate it directly in Supabase for each role. Until then the Career Journey timeline correctly omits the line rather than showing blank space, so this isn't visibly broken, just incomplete content — same category as the ~14 placeholder projects in item 1.
+18. **New** — `projects.origin`/`projects.significance` do **not** exist yet, despite being referenced once in passing as if already live — confirmed via direct schema introspection (`projects` only has `goal`). If this split is ever actually built, update this doc then; until it is, `projects.goal` remains the only narrative field on `projects`.

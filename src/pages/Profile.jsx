@@ -192,7 +192,7 @@ export default function Profile() {
         supabase.from("evidence").select("title, bullet").in("title", achievementRefs),
         supabase.from("projects").select("name, goal").in("name", projectRefs),
         supabase.from("evidence").select("title, quote, source").in("title", testimonialTitles),
-        supabase.from("roles").select("job_title, description, start_date, end_date, companies(name)").order("start_date"),
+        supabase.from("roles").select("job_title, team, start_date, end_date, companies(name)").order("start_date"),
       ]);
       if (cancelled) return;
 
@@ -211,7 +211,7 @@ export default function Profile() {
         start: r.start_date,
         end: r.end_date || "9999-12-31", // treat the ongoing role as open-ended for containment comparisons only
         years: `${r.start_date.slice(0, 4)}–${r.end_date ? r.end_date.slice(0, 4) : "Present"}`,
-        d: r.description,
+        d: r.team,
       }));
       // Nest a role under another same-company role whose date range strictly contains it (e.g. a
       // client secondment's dates fall inside the general tenure's dates) — inferred from dates, not
@@ -428,7 +428,7 @@ export default function Profile() {
                   <a href={explorerLink({ company: t.org, groupBy: "company" })}
                     className="hover:underline underline-offset-2" style={{ color: ACCENTS[t.org] }}>{t.org}</a>
                 </div>
-                <div className="text-sm text-black/60 mt-1 leading-relaxed">{t.d}</div>
+                {t.d && <div className="text-sm text-black/60 mt-1 leading-relaxed">{t.d}</div>}
 
                 {t.children && t.children.length > 0 && (
                   <div className="mt-3 pl-4 space-y-3 border-l-2" style={{ borderColor: `${ACCENT}25` }}>
@@ -439,7 +439,7 @@ export default function Profile() {
                           <a href={explorerLink({ company: c.org, jobRole: c.role, groupBy: "role" })}
                             className="hover:underline underline-offset-2" style={{ color: INK }}>{c.role}</a>
                         </div>
-                        <div className="text-xs text-black/50 mt-0.5 leading-relaxed">{c.d}</div>
+                        {c.d && <div className="text-xs text-black/50 mt-0.5 leading-relaxed">{c.d}</div>}
                       </div>
                     ))}
                   </div>
