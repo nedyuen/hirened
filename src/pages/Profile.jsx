@@ -64,7 +64,7 @@ const FUNCTIONAL = [
 
 // Hand-maintained, same pattern as Explorer.jsx's TARGET_ROLES — Ned edits this directly to control which
 // proof example surfaces per category. type: 'achievement' pulls a specific bullet (sharp, metric-driven);
-// type: 'project' pulls the project's goal instead (general, when a granular metric isn't the point).
+// type: 'project' pulls the project's description instead (general, when a granular metric isn't the point).
 // `ref` must match an evidence `title` or project `name` exactly as it appears in Explorer.jsx.
 const CAREER_HIGHLIGHTS = {
   Strategy: [{ type: "project", ref: "Prime Transformation" }],
@@ -190,7 +190,7 @@ export default function Profile() {
 
       const [{ data: achievementRows }, { data: projectRows }, { data: testimonialRows }, { data: roleRows }] = await Promise.all([
         supabase.from("evidence").select("title, bullet").in("title", achievementRefs),
-        supabase.from("projects").select("name, goal").in("name", projectRefs),
+        supabase.from("projects").select("name, description").in("name", projectRefs),
         supabase.from("evidence").select("title, quote, source").in("title", testimonialTitles),
         supabase.from("roles").select("job_title, team, start_date, end_date, companies(name)").order("start_date"),
       ]);
@@ -198,7 +198,7 @@ export default function Profile() {
 
       const hText = {};
       achievementRows?.forEach((r) => { hText[r.title] = r.bullet; });
-      projectRows?.forEach((r) => { hText[r.name] = r.goal; });
+      projectRows?.forEach((r) => { hText[r.name] = r.description; });
       setHighlightText(hText);
 
       const tText = {};

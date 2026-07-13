@@ -7,7 +7,6 @@ const ACCENTS = { "JP Morgan": "#1F5C56", "Goldman Sachs": "#A9803F", "Morgan St
 const TYPE_COLORS = { achievement: "#1F5C56", award: "#B8860B", review: "#6B4C8A" };
 const HIGHLIGHT_COLOR = "#1E3A5F";
 const CATEGORIES = ["Strategy", "Operations", "Product", "Data", "Programming", "Change", "Finance", "Management"];
-const FUNC_ROLES = ["Transformation Lead", "Product Manager", "Project Manager", "Program Manager", "Business Analyst"];
 const TYPES = ["achievement", "award", "review"];
 const LEVELS = { company: "Company-level", role: "Role-level", project: "Project-level" };
 
@@ -26,7 +25,7 @@ const TARGET_ROLES = {
 };
 
 // Fetches companies/roles/projects/evidence from Supabase and assembles the same flat row shape the
-// UI already expects (company, employer, jobTitle, functionalRole, project, goal, bullet, detail,
+// UI already expects (company, employer, jobTitle, functionalRole, project, description, bullet, detail,
 // metric, title, quote, source, type, level, tags, highlighted, sort_order, placeholder). Role
 // assignment now comes straight from each row's own FK (role_id, or via its project's role_id) —
 // no more year/client-based resolveRole() guessing, since seeding already set these correctly once.
@@ -55,7 +54,8 @@ async function fetchExplorerData() {
     return {
       id: p.id,
       name: p.name,
-      goal: p.goal,
+      description: p.description,
+      detail: p.detail,
       employer,
       company: p.client_name || employer,
       functionalRole: p.functional_role,
@@ -75,12 +75,12 @@ async function fetchExplorerData() {
       // No project currently has zero evidence, but preserved for when one eventually does — placeholders
       // sort last (see the `sort_order` used below) same as the old year-based sort did implicitly.
       return [{ placeholder: true, company: p.company, employer: p.employer, functionalRole: p.functionalRole,
-        jobTitle: p.jobTitle, project: p.name, goal: p.goal, tags: [], level: "project", sort_order: Number.MAX_SAFE_INTEGER }];
+        jobTitle: p.jobTitle, project: p.name, description: p.description, tags: [], level: "project", sort_order: Number.MAX_SAFE_INTEGER }];
     }
     return items.map((e) => ({
       type: e.type, level: e.level, title: e.title, bullet: e.bullet, metric: e.metric, quote: e.quote,
       source: e.source, detail: e.detail, highlighted: !!e.highlighted, tags: e.category_tags || [], sort_order: e.sort_order,
-      company: p.company, employer: p.employer, functionalRole: p.functionalRole, jobTitle: p.jobTitle, project: p.name, goal: p.goal,
+      company: p.company, employer: p.employer, functionalRole: p.functionalRole, jobTitle: p.jobTitle, project: p.name, description: p.description,
     }));
   });
 
@@ -90,7 +90,7 @@ async function fetchExplorerData() {
     return {
       type: e.type, level: e.level, title: e.title, bullet: e.bullet, metric: e.metric, quote: e.quote,
       source: e.source, detail: e.detail, highlighted: !!e.highlighted, tags: e.category_tags || [], sort_order: e.sort_order,
-      company: e.client_name || employer, employer, functionalRole: null, jobTitle: role.job_title, project: null, goal: null,
+      company: e.client_name || employer, employer, functionalRole: null, jobTitle: role.job_title, project: null, description: null,
     };
   });
 
@@ -153,6 +153,10 @@ export default function Explorer() {
   const [query, setQuery] = useState(initial.get("q") || "");
   const [groupBy, setGroupBy] = useState(initial.get("groupBy") || "company");
   const [expanded, setExpanded] = useState(null);
+  // Tracks which projects' `detail` is expanded — shared by the group-by-project header and the
+  // "Project context" box inside evidence cards, both keyed the same way as descByKey/detailByKey below.
+  const [expandedProjectDetail, setExpandedProjectDetail] = useState(new Set());
+  const toggleProjectDetail = (key) => setExpandedProjectDetail((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   const [showPlaceholders, setShowPlaceholders] = useState(true);
   const [minTier, setMinTier] = useState(initial.get("tier") || "all"); // 'all' | 'highlighted'
   const hasIncomingFilters = ["type", "cat", "role", "tier", "preset", "company", "q", "groupBy"].some((p) => initial.get(p));
@@ -198,7 +202,7 @@ export default function Explorer() {
       if (selectedTypes.length && !r.placeholder && !selectedTypes.includes(r.type)) return false;
       if (minTier === "highlighted" && !r.highlighted) return false;
       if (query) {
-        const hay = ((r.title || "") + (r.bullet || "") + (r.project || "") + (r.goal || "") + (r.detail || "") + (r.quote || "") + r.tags.join(" ")).toLowerCase();
+        const hay = ((r.title || "") + (r.bullet || "") + (r.project || "") + (r.description || "") + (r.detail || "") + (r.quote || "") + r.tags.join(" ")).toLowerCase();
         const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
         if (!terms.every((t) => hay.includes(t))) return false;
       }
@@ -206,9 +210,19 @@ export default function Explorer() {
     }).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   }, [rows, selCompanies, selRoles, selProjects, selectedDeliveryRoles, selectedCats, selectedTypes, query, showPlaceholders, minTier]);
 
-  const goalByKey = useMemo(() => {
+  // Delivery role is inherently open-ended (unlike Expertise's fixed 8-category taxonomy or Type's fixed
+  // enum) — expected to keep growing as more of Ned's career gets logged. Derived live from whatever
+  // functional_role values are actually present, not a hardcoded list that would drift behind real data.
+  const deliveryRoles = useMemo(() => [...new Set(projects.map((p) => p.functionalRole).filter(Boolean))].sort(), [projects]);
+
+  const descByKey = useMemo(() => {
     const m = new Map();
-    projects.forEach((p) => m.set(`${p.company} · ${p.name}`, p.goal));
+    projects.forEach((p) => m.set(`${p.company} · ${p.name}`, p.description));
+    return m;
+  }, [projects]);
+  const detailByKey = useMemo(() => {
+    const m = new Map();
+    projects.forEach((p) => m.set(`${p.company} · ${p.name}`, p.detail));
     return m;
   }, [projects]);
   const roleDescByKey = useMemo(() => {
@@ -348,7 +362,7 @@ export default function Explorer() {
                   const on = selProjects.has(p.name);
                   const clientTag = p.company !== p.employer ? ` (${p.company.split(" ")[0]})` : "";
                   return (
-                    <button key={p.name} onClick={() => toggleProject(p.name)} title={p.goal}
+                    <button key={p.name} onClick={() => toggleProject(p.name)} title={p.description}
                       className={`px-3 py-1.5 rounded-md text-xs font-mono border ${on ? "text-white border-transparent" : "border-black/15 text-black/50"}`}
                       style={on ? { background: ACCENTS[p.employer] } : {}}>{p.name}{clientTag}</button>
                   );
@@ -359,7 +373,7 @@ export default function Explorer() {
             <div className="border-t border-black/10 pt-4">
               <span className="font-mono text-[10px] text-black/40 uppercase block mb-2">Delivery role — what hat, on that project (distinct from job title)</span>
               <div className="flex gap-2 flex-wrap">
-                {FUNC_ROLES.map((r) => {
+                {deliveryRoles.map((r) => {
                   const on = selectedDeliveryRoles.includes(r);
                   return (
                     <button key={r} onClick={() => toggleDeliveryRole(r)}
@@ -465,8 +479,18 @@ export default function Explorer() {
                 {groupBy === "company" && companies.find((c) => c.name === grp.key) && (
                   <p className="text-xs text-black/40 mt-1 max-w-2xl">{companies.find((c) => c.name === grp.key).blurb}</p>
                 )}
-                {groupBy === "project" && goalByKey.get(grp.key) && (
-                  <p className="text-xs text-black/40 mt-1 max-w-2xl">{goalByKey.get(grp.key)}</p>
+                {groupBy === "project" && descByKey.get(grp.key) && (
+                  <div className="mt-1 max-w-2xl">
+                    <p className="text-xs text-black/40">{descByKey.get(grp.key)}</p>
+                    {detailByKey.get(grp.key) && (
+                      <button onClick={() => toggleProjectDetail(grp.key)} className="font-mono text-[10px] text-black/40 hover:text-black/70 mt-1">
+                        {expandedProjectDetail.has(grp.key) ? "collapse ↑" : "expand ↓"}
+                      </button>
+                    )}
+                    {expandedProjectDetail.has(grp.key) && detailByKey.get(grp.key) && (
+                      <p className="text-xs text-black/50 mt-1 leading-relaxed">{detailByKey.get(grp.key)}</p>
+                    )}
+                  </div>
                 )}
                 {groupBy === "role" && roleDescByKey.get(grp.key) && (
                   <p className="text-xs text-black/40 mt-1 max-w-2xl">{roleDescByKey.get(grp.key)}</p>
@@ -507,7 +531,7 @@ export default function Explorer() {
                       <span className="font-mono text-[10px] text-black/40">{r.company} · {r.jobTitle}{r.project ? ` · ${r.project}` : ""}</span>
                       {!r.placeholder && <KpiBadge level={r.level} />}
                     </div>
-                    {r.placeholder && <p className="text-xs text-black/60 mt-2 leading-relaxed">{r.goal}</p>}
+                    {r.placeholder && <p className="text-xs text-black/60 mt-2 leading-relaxed">{r.description}</p>}
                     {r.type === "review" && !r.placeholder && (
                       <div className="mt-2 pl-3 border-l-2 rounded-r-md py-1.5" style={{ borderColor: TYPE_COLORS.review, background: `${TYPE_COLORS.review}0d` }}>
                         <p className="text-xs italic text-black/70 leading-relaxed">"{highlightMatch(r.quote, query)}"</p>
@@ -524,12 +548,24 @@ export default function Explorer() {
                     {isOpen && r.detail && (
                       <div className="mt-3 pt-3 border-t border-black/10 text-xs text-black/70 leading-relaxed space-y-2">
                         <div>{highlightMatch(r.detail, query)}</div>
-                        {r.goal && groupBy !== "project" && (
-                          <div className="bg-black/5 rounded-lg p-2.5 text-black/50">
-                            <span className="font-mono text-[9px] uppercase tracking-wide block mb-1">Project context — {r.project}</span>
-                            {r.goal}
-                          </div>
-                        )}
+                        {r.description && groupBy !== "project" && (() => {
+                          const pKey = `${r.company} · ${r.project}`;
+                          const pDetail = detailByKey.get(pKey);
+                          const pDetailOpen = expandedProjectDetail.has(pKey);
+                          return (
+                            <div className="bg-black/5 rounded-lg p-2.5 text-black/50">
+                              <span className="font-mono text-[9px] uppercase tracking-wide block mb-1">Project context — {r.project}</span>
+                              {r.description}
+                              {pDetail && (
+                                <button onClick={(e) => { e.stopPropagation(); toggleProjectDetail(pKey); }}
+                                  className="block font-mono text-[9px] text-black/40 hover:text-black/70 mt-1.5">
+                                  {pDetailOpen ? "collapse ↑" : "expand ↓"}
+                                </button>
+                              )}
+                              {pDetailOpen && pDetail && <div className="mt-1.5 leading-relaxed">{pDetail}</div>}
+                            </div>
+                          );
+                        })()}
                         <div className="font-mono text-[10px]" style={{ color: cAccent }}>collapse ↑</div>
                       </div>
                     )}
